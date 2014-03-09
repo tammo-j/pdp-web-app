@@ -1,0 +1,203 @@
+/* Header toolbar */
+.ui-header .ui-title div.ui-icon
+{
+	display:inline-block;
+	width:22px;
+	height:0.9em;
+	position:relative;
+}
+.ui-header .ui-title div.ui-icon::after
+{
+	content:"";
+	display:block;
+	position:absolute;
+	top:-2px;
+	width:22px;
+	height:22px;
+	border-radius:1em;
+	background-position:center center;
+	background-repeat:no-repeat;
+	background-color:transparent;
+}
+.ui-header .ui-title div.active::after
+{
+	background-color:rgba(0,0,0,.1);
+}
+.ui-highlite::after
+{
+	background-color:rgba(0,0,255,.5);
+}
+
+/* Containers */
+.hidden
+{
+	display:none !important;
+}
+p.last
+{
+	margin-bottom:0;
+}
+
+/* Product list */
+ul#product-list li a
+{
+	line-height:80px;
+}
+ul#product-list li a img:first-child
+{
+	top:1em;
+}
+ul#product-list li a span.price, ul#cart-list li a span.price
+{
+	display:block;
+	float:right;
+	font-weight:normal;
+}
+div.list-header span.price
+{
+	display:block;
+	float:right;
+	margin-right:5em;
+}
+
+/* Category list */
+ul#category-list
+{
+	width:90%;
+	padding:0;
+	margin:0 auto;
+}
+ul#category-list li
+{
+	list-style:none;
+	display:inline-block;
+	text-align:center;
+	width:43.7%;
+	margin:3.4% 3%;
+}
+ul#category-list a
+{
+	margin:0;
+}
+ul#category-list li a img
+{
+	display:block;
+	margin:0 auto;
+	max-width:100px;
+	max-height:100px;
+}
+
+/* Product page */
+.product-page
+{
+	padding:1em 2em;
+}
+.product-page h1
+{
+	margin:0 0 0 -1em;
+	line-height:100px;
+	font-size:1.3em;
+}
+.product-page h1 img
+{
+	display:inline-block;
+	vertical-align:middle;
+	max-width:100px;
+	max-height:100px;
+	margin-right:1em;
+}
+table.product-attributes
+{
+	margin:1.5em 0;
+	width:100%;
+	line-height:2em;
+}
+table.product-attributes th
+{
+	width:45%;
+	text-align:left;
+}
+table.product-facts
+{
+	width:100%;
+	caption-side:bottom;
+}
+table.product-facts th
+{
+	text-align:left;
+	border-bottom:1px solid #ddd;
+}
+table.product-facts td.nam
+{
+	width:45%;
+}
+table.product-facts td.sub
+{
+	padding-left:1em;
+}
+table.product-facts td.val
+{
+	width:5em;
+}
+table.product-facts caption
+{
+	text-align:left;
+	font-size:0.8em;
+}
+
+/* Product amount input */
+form.amount-form
+{
+	width:70%;
+	float:left;
+	margin:0 0 0 1em;
+	padding:0;
+}
+form.amount-form .ui-input-text
+{
+	display:block;
+	width:45%;
+	float:left;
+}
+form.amount-form .ui-slider
+{
+	display:block;
+	width:80%;
+	float:left;
+	margin:0.7em 0;
+}
+form.amount-form .ui-slider-track
+{
+	margin:0 15px;
+}
+form.amount-form .ui-slider input
+{
+	display:none;
+}
+form.amount-form label
+{
+	float:left;
+	margin:1em 0 0 0.5em;
+}
+.amount-toolbar h1.total
+{
+	margin:1.15em 0 0 0;
+	padding:0;
+}
+
+/* Cart toolbar */
+#cart-toolbar {
+	text-align:center;
+}
+#cart-toolbar h1 {
+	float:left;
+}
+#cart-toolbar h1.total {
+	float:right;
+	margin-right:3.6em;
+}
+#cart-toolbar a {
+	display:block;
+	margin:2.5em 7em 1em 7em;
+	font-size:16px;
+}
