@@ -23,8 +23,6 @@ def order_products(request):
     if request.method != 'POST':
         raise Http404()
 
-    print request.POST
-
     # Parse products and amounts from POST.
     order_data = []
     total_order = Decimal(0)
