@@ -1,280 +1,562 @@
 /**
  * The site object.
  */
-var SiteCode = function() {
+var SiteCode = function()
+{
 	var self = this;
-	
+
 	/**
 	 * State data.
 	 */
+	self.page = 0;
+	self.categoryId = null;
+	self.search = null;
+	self.product = null;
 	self.items = {};
 	self.elements = null;
-	self.product = null;
-	self.productTotalElement = null;
-	
+
 	/**
 	 * Initializes the site.
 	 */
 	self.initialize = function(event)
 	{
+		// Create toolbar.
 		$('[data-role="header"]').toolbar();
 
+		// Pick elements.
 		self.elements = {
-			'cartButton': $('#cart-button'),
+			'categoryList' : $('#category-list'),
+			'productList' : $('#product-list'),
+			'cartList' : $('#cart-list'),
+			'backButton' : $('#back-button'),
+			'cartButton' : $('#cart-button'),
+			'searchField' : $('#search-field'),
+			'productTotal' : $('#product-total'),
+			'amountSlider' : null
 		};
-		
+
 		// Listen page transitions.
-		$(':mobile-pagecontainer').on('pagecontainerbeforetransition', self.pageCreated);
+		$(':mobile-pagecontainer').on('pagecontainerbeforetransition',
+			self.beforePage);
 		$(document).on('pagechange', self.pageChanged);
-		
-		// Listen amount changes.
-		$('#amount-field').on('change', self.updatePrice).on('click', function(event) { $(this).select(); });
-		$('#amount-slider-form').on('change', self.updatePriceSlider);
+
+		// Listen widgets.
+		self.elements.backButton.on('click', self.goBack);
+		self.elements.searchField.on('keyup', self.searchProducts).on('change',
+			self.searchProducts);
+		$('#amount-slider-form').on(
+			'slidecreate',
+			function(event)
+			{
+				self.elements.amountSlider = $('#amount-slider').on('change',
+					self.selectAmount);
+				self.updateSlider();
+			});
+		$('#order-button').on('click', self.orderTicket);
+
+		// Setup start page.
+		self.setupPage($('#search'));
 	};
-	
+
 	/**
-	 * Prepares a new page.
+	 * Prepares a page to be transitioned.
 	 */
-	self.pageCreated = function(event, ui)
+	self.beforePage = function(event, ui)
 	{
-		var page = ui.toPage.eq(0); 
+		self.setupPage(ui.toPage.eq(0));
+	};
+
+	/**
+	 * Creates page contents.
+	 */
+	self.setupPage = function(page)
+	{
 		var id = page.attr('id');
-		if (id == 'product' || id == 'product2')
+
+		// Search page.
+		if (id == 'search')
 		{
-			$('#back-button').attr('href', '#search');
-			
-			// Prepare selected product.
-			self.product = {
-				'id': id,
-				'name': page.find('.name').text(),
-				'price': parseFloat(page.find('.price').text().replace(/,/g, '.')),
-				'amount': 0,
-				'total': 0
-			};
-			self.productTotalElement = page.find('.total');			
+			self.elements.backButton.attr('href', '#null');
+			self.elements.cartButton.removeClass('ui-disabled');
+			self.page = 1;
+
+			// Update categories on return.
+			if (self.categoryId === null && self.search === null)
+			{
+				self.elements.backButton.addClass('ui-disabled');
+				self.showCategories();
+			}
+			else
+			{
+				self.elements.backButton.removeClass('ui-disabled');
+			}
 		}
+
+		// Product page.
+		else if (id == 'product')
+		{
+			self.elements.backButton.attr('href', '#search');
+			self.elements.backButton.removeClass('ui-disabled');
+			self.elements.cartButton.removeClass('ui-disabled');
+			self.page = 2;
+
+			// Update product data.
+			page.find('img.image').attr('src', self.product.image);
+			page.find('.name').text(self.product.name);
+			page.find('.price').html(self.eur(self.product.price_per_kg, true));
+
+			// Update product selection.
+			self.elements.productTotal.html('');
+			if (self.elements.amountSlider !== null)
+			{
+				self.updateSlider();
+			}
+
+			// Update product details.
+			var details = self.productDetails(self.product);
+			var table = page.find('table.product-attributes');
+			self.populateTable(table, details['attributes'], function(el, item)
+			{
+				el.find('th').text(item.label);
+				el.find('td').text(item.value);
+			});
+			table = page.find('table.product-facts');
+			self.populateTable(table, details['facts'], function(el, item)
+			{
+				el.find('.nam').text(item.label);
+				el.find('.val').text(item.value);
+				el.find('.per').text(item.percent);
+			});
+			if (details['facts'].length > 0)
+			{
+				table.show();
+			}
+			else
+			{
+				table.hide();
+			}
+		}
+
+		// Shopping cart page.
 		else if (id == 'cart')
 		{
-			// Set back button.
-			$('#back-button').attr('href', '#search');
-			if (ui.options.fromPage)
+			// Configure return to previous page.
+			if (self.page == 2)
 			{
-				var from = ui.options.fromPage.eq(0).attr('id');
-				if (from == 'product' || from == 'product2')
+				self.elements.backButton.attr('href', '#product');
+			}
+			else
+			{
+				self.elements.backButton.attr('href', '#search');
+			}
+			self.elements.backButton.removeClass('ui-disabled');
+			self.elements.cartButton.addClass('ui-disabled');
+			self.page = 3;
+
+			// Clean empty items.
+			for ( var pk in self.items)
+			{
+				if (self.items[pk].amount <= 0)
 				{
-					$('#back-button').attr('href', '#' + from);					
+					delete self.items[pk];
 				}
 			}
-			
+
 			// Create cart items.
-			var list = page.find('ul#cart-list');
-			var tpl = list.find('li[data-id="tpl__"]');
-			var e = null;
 			var i = 0;
-			list.empty();
-			list.append(tpl);
-			for (var id in self.items)
-			{
-				var item = self.items[id];
-				if (item.amount > 0)
+			self.populate(self.elements.cartList, self.items,
+				function(el, item)
 				{
-					e = tpl.clone().attr('data-id', id).removeClass('hidden ui-first-child ui-last-child');
-					e.find('a').eq(0).attr('href', '#' + item.id);
-					e.find('a.ui-icon-delete').click(self.deleteCart);
-					e.find('.name').text(item.name);
-					e.find('.price').html(self.eur(item.total));
-					if (i == 0)
-					{
-						e.addClass('ui-first-child');
-					}
-					list.append(e);
+					el.find('.name').text(item.object.name);
+					el.find('.price').html(
+						self.eur(item.amount * item.object.price_per_kg));
+					el.find('a').eq(0).data('product', item.object).on('click',
+						function(event)
+						{
+							self.product = $(this).data('product');
+						});
+					el.find('a.ui-icon-delete').on('click', self.deleteCart);
 					i++;
-				}
-			}
-			if (e != null)
+				});
+			if (i > 0)
 			{
-				e.addClass('ui-last-child');
+				$('#cart-toolbar a').removeClass('ui-disabled');
+			}
+			else
+			{
+				$('#cart-toolbar a').addClass('ui-disabled');
 			}
 			self.updateCartPrice();
 		}
+
+		// Checkout page.
+		else if (id == 'ticket')
+		{
+			self.page = 4;
+			$('#queue-number').text('1');
+			$('#queue-time').text('5 min');
+		}
 	};
-	
+
 	/**
 	 * Finishes up with a new page.
 	 */
 	self.pageChanged = function(event, data)
 	{
-		var step = data.toPage.attr('data-step');
-		if (step && step == 2)
+		if (self.page < 4)
 		{
-			self.showStep(2);
-			self.activateBack();
-			self.activateCart();
-			
-			// Update amount in form.
+			$('#step-title .ui-icon').removeClass('active').eq(self.page - 1)
+					.addClass('active');
+		}
+	};
+
+	/**
+	 * Back button clicked.
+	 */
+	self.goBack = function(event)
+	{
+		if (self.page < 2)
+		{
+			if (self.page > 0 && self.categoryId !== null)
+			{
+				self.elements.backButton.addClass('ui-disabled');
+				self.elements.searchField.val('');
+				self.showCategories();
+			}
+		}
+	};
+
+	/**
+	 * Shows product categories.
+	 */
+	self.showCategories = function()
+	{
+		self.categoryId = null;
+		self.search = null;
+		self.elements.categoryList.show();
+		self.elements.productList.hide();
+		$.mobile.loading('show');
+		$.getJSON(categoriesUrl, function(data)
+		{
+			$.mobile.loading('hide');
+			self.populate(self.elements.categoryList, data, function(el, item)
+			{
+				el.find('.name').text(item.name);
+				el.find('img').attr('src', item.image);
+				el.find('a').on('click', function(event)
+				{
+					event.preventDefault();
+					self.showProducts($(this).parent('li').attr('data-id'));
+				});
+			});
+		});
+	};
+
+	/**
+	 * Shows product list.
+	 */
+	self.showProducts = function(categoryId, search)
+	{
+		self.elements.backButton.removeClass('ui-disabled');
+		self.elements.categoryList.hide();
+		self.elements.productList.show();
+		$.mobile.loading('show');
+		var url = null;
+		if (search !== undefined)
+		{
+			url = searchUrl + '?q=' + encodeURIComponent(search);
+		}
+		else if (categoryId !== null)
+		{
+			self.categoryId = categoryId;
+			url = categoryUrl + categoryId;
+		}
+		if (url != null)
+		{
+			$.getJSON(url, function(data)
+			{
+				$.mobile.loading('hide');
+				self.populate(self.elements.productList, data, function(el,
+						item)
+				{
+					el.find('.name').text(item.name);
+					el.find('.price').html(self.eur(item.price_per_kg, true));
+					el.find('img').attr('src', item.image);
+					el.find('a').data('product', item).on('click',
+						function(event)
+						{
+							self.product = $(this).data('product');
+						});
+				});
+			});
+		}
+	};
+
+	/**
+	 * Searches and shows products.
+	 */
+	self.searchProducts = function(event)
+	{
+		var q = self.elements.searchField.val().trim();
+		if (q.length > 0)
+		{
+			self.search = q;
+			self.showProducts(null, q);
+		}
+		else if (self.categoryId !== null)
+		{
+			self.search = null;
+			self.showProducts(self.categoryId);
+		}
+		else
+		{
+			self.search = null;
+			self.showCategories();
+		}
+	};
+
+	/**
+	 * Updates slider parameters for the state.
+	 */
+	self.updateSlider = function()
+	{
+		if (self.product !== null)
+		{
 			var amount = 0;
-			var id = data.toPage.attr('id');
-			if (self.items[id] != undefined)
+			if (self.items[self.product.pk] !== undefined)
 			{
-				amount = self.items[id].amount;
+				amount = self.items[self.product.pk].amount;
 			}
-			if (id == 'product')
-			{
-				$('#amount-field').val(amount * 1000).change();
-			}
-			else if (id == 'product2')
-			{
-				$('#amount-slider').val(amount).slider('refresh');
-				$('#amount-slider-form').find('.ui-slider-handle').text(amount);
-			}
+			self.elements.amountSlider.attr('max', self.product.max_kg).attr(
+				'step', self.product.step_kg).val(amount).slider('refresh');
+			self.elements.amountSlider.parent('.ui-slider').find(
+				'.ui-slider-handle').text(amount);
+			self.elements.productTotal.html(self.eur(amount
+				* self.product.price_per_kg));
 		}
-		else if (step && step == 3)
+	}
+
+	/**
+	 * Selects a new amount using slider.
+	 */
+	self.selectAmount = function(event)
+	{
+		var amount = parseFloat(self.elements.amountSlider.val());
+		self.elements.productTotal.html(self.eur(amount
+			* self.product.price_per_kg));
+		if (self.items[self.product.pk] !== undefined)
 		{
-			self.showStep(3);
-			self.activateBack();
-			self.activateCart(false);
+			self.items[self.product.pk].amount = amount;
 		}
 		else
 		{
-			self.showStep(1);
-			self.activateBack(false);
-			self.activateCart();
+			self.items[self.product.pk] = {
+				'object' : self.product,
+				'amount' : amount
+			};
 		}
-	};
-
-	/**
-	 * Shows current step.
-	 */
-	self.showStep = function(step)
-	{
-		$('#step-title .ui-icon').removeClass('active').eq(step - 1).addClass('active');	
-	};
-
-	/**
-	 * Activates the back button.
-	 */
-	self.activateBack = function(flag)
-	{
-		if (flag !== undefined && !flag)
-		{
-			$('#back-button').addClass('ui-disabled');
-		}
-		else
-		{
-			$('#back-button').removeClass('ui-disabled');		
-		}
-	};
-
-	/**
-	 * Activates the cart button.
-	 */
-	self.activateCart = function(flag)
-	{
-		if (flag !== undefined && !flag)
-		{
-			$('#cart-button').addClass('ui-disabled');
-		}
-		else
-		{
-			$('#cart-button').removeClass('ui-disabled');		
-		}
-	};
-
-	/**
-	 * Updates the total item price.
-	 */
-	self.updatePrice = function(event)
-	{
-		var str = $(this).val();
-		if (str != undefined && str != '')
-		{
-			self.product.amount = parseInt(str) / 1000;
-		}
-		else
-		{
-			self.product.amount = 0;
-		}
-		self.product.total = self.product.price * self.product.amount;
-		self.productTotalElement.html(self.eur(self.product.total));
-		self.updateCart(self.product);
-	};
-	self.updatePriceSlider = function(event)
-	{
-		self.product.amount = parseFloat($('#amount-slider').val());
-		self.product.total = self.product.price * self.product.amount;
-		self.productTotalElement.html(self.eur(self.product.total));
-		self.updateCart(self.product);
-	};
-	
-	/**
-	 * Sets an item in the shopping cart.
-	 */
-	self.updateCart = function(item)
-	{
-		self.items[item.id] = item;
 		self.updateCartState();
 	};
-	
+
 	/**
 	 * Deletes an item in the shopping cart.
 	 */
 	self.deleteCart = function(event)
 	{
 		event.preventDefault();
-		var id = $(this).parent('li').attr('data-id');
-		delete self.items[id];
-		$('#cart-list li[data-id="' + id + '"]').remove();
-		self.updateFirstAndLastChild('ul#cart-list li:visible');
+		var pk = $(this).parent('li').remove().attr('data-id');
+		delete self.items[pk];
+		self.updateFirstAndLastChild(self.elements.cartList.find('li:visible'));
 		self.updateCartState();
 		self.updateCartPrice();
-	}
-	
+	};
+
 	/**
 	 * Updates the cart state.
 	 */
 	self.updateCartState = function()
 	{
-		for (var id in self.items)
+		for ( var pk in self.items)
 		{
-			if (self.items[id].amount > 0)
+			if (self.items[pk].amount > 0)
 			{
 				self.elements.cartButton.addClass('ui-highlite');
 				return;
 			}
 		}
+		$('#cart-toolbar a').addClass('ui-disabled');
 		self.elements.cartButton.removeClass('ui-highlite');
 	};
-	
+
 	/**
 	 * Updates the cart price.
 	 */
 	self.updateCartPrice = function()
 	{
 		var total = 0;
-		for (var id in self.items)
+		for ( var pk in self.items)
 		{
-			total += self.items[id].total;
+			total += self.items[pk].amount * self.items[pk].object.price_per_kg;
 		}
 		$('#cart-toolbar .total').html(self.eur(total));
+	};
+
+	/**
+	 * Populates a list.
+	 */
+	self.populate = function(list, listItems, decorateCB)
+	{
+		list.find('li[data-id="empty__"]').addClass('hidden');
+		list.find('li:not(.hidden)').remove();
+		var tpl = list.find('li[data-id="tpl__"]');
+		var e = null;
+		var i = 0;
+		for ( var id in listItems)
+		{
+			var item = listItems[id];
+			e = tpl.clone().attr('data-id', id).removeClass(
+				'hidden ui-first-child ui-last-child');
+			decorateCB(e, item);
+			if (i == 0)
+			{
+				e.addClass('ui-first-child');
+			}
+			list.append(e);
+			i++;
+		}
+		if (e != null)
+		{
+			e.addClass('ui-last-child');
+		}
+		if (i == 0)
+		{
+			list.find('li[data-id="empty__"]').removeClass('hidden');
+		}
+	};
+
+	/**
+	 * Populates a table.
+	 */
+	self.populateTable = function(table, rowItems, decorateCB)
+	{
+		table.find('tr.details').remove();
+		var tpl = table.find('tr[data-id="tpl__"]');
+		var e = null;
+		for ( var i in rowItems)
+		{
+			e = tpl.clone().removeAttr('data-id').removeClass('hidden')
+					.addClass('details');
+			decorateCB(e, rowItems[i]);
+			table.append(e);
+		}
 	}
-	
+
 	/**
 	 * Updates the ui-first-child and ui-last-child classes.
 	 */
 	self.updateFirstAndLastChild = function(selector)
 	{
 		var els = $(selector);
-		els.removeClass('ui-first-child ui-last-child').first().addClass('ui-first-child');
+		els.removeClass('ui-first-child ui-last-child').first().addClass(
+			'ui-first-child');
 		els.last().addClass('ui-last-child');
 	};
-	
+
+	/**
+	 * Parses product details string to fields.
+	 */
+	self.productDetails = function(product)
+	{
+		var a = [];
+		var f = [];
+		if (product.code.trim().length > 0)
+		{
+			a.push({
+				'label' : 'Code',
+				'value' : product.code
+			});
+		}
+		var lines = product.details.split('\n');
+		var to_a = true;
+		for ( var i in lines)
+		{
+			var line = lines[i].trim();
+			var cols = line.split('|');
+			if (to_a)
+			{
+				if (cols.length >= 2)
+				{
+					a.push({
+						'label' : cols[0],
+						'value' : cols[1]
+					});
+				}
+				else if (line.length > 0 && line[0] == '-')
+				{
+					to_a = false;
+				}
+			}
+			else if (cols.length >= 3)
+			{
+				f.push({
+					'label' : cols[0],
+					'value' : cols[1],
+					'percent' : cols[2]
+				});
+			}
+		}
+		return {
+			'attributes' : a,
+			'facts' : f
+		};
+	};
+
 	/**
 	 * Formats euro value for view.
 	 */
-	self.eur = function(value)
+	self.eur = function(value, perWeight)
 	{
-		return value.toFixed(2).replace(/\./g, ',') + ' &euro;';
+		if (typeof value == 'string')
+		{
+			value = parseFloat(value);
+		}
+		var str = value.toFixed(2).replace(/\./g, ',');
+		if (perWeight !== undefined && perWeight)
+		{
+			return str + ' &euro;/kg';
+		}
+		return str + ' &euro;';
 	};
+
+	/**
+	 * Orders a ticket.
+	 */
+	self.orderTicket = function(event)
+	{
+		event.preventDefault();
+		$.mobile.loading('show');
+		var post = {'csrfmiddlewaretoken':$('#cart-toolbar form input').val()};
+		var i = 0;
+		for ( var pk in self.items)
+		{
+			post['product' + i] = pk;
+			post['amount' + i] = self.items[pk].amount;
+			i++;
+		}
+		$.post(orderUrl, post, function(data)
+		{
+			if (data.ok)
+			{
+				window.location.href = ticketUrl + '#' + data.number + '+' + data.time;
+			}
+			else
+			{
+				$.mobile.showPageLoadingMsg($.mobile.pageLoadErrorMessageTheme,
+					$.mobile.pageLoadErrorMessage, true);
+				setTimeout($.mobile.hidePageLoadingMsg, 1500);
+			}
+		}, 'json');
+	}
 };
 
 // Create the site.

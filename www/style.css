@@ -33,6 +33,10 @@
 {
 	display:none !important;
 }
+.divider
+{
+	border-top:1px solid #ddd;
+}
 p.last
 {
 	margin-bottom:0;
@@ -196,8 +200,71 @@ form.amount-form label
 	float:right;
 	margin-right:3.6em;
 }
-#cart-toolbar a {
+#cart-toolbar a, #ticket a {
 	display:block;
-	margin:2.5em 7em 1em 7em;
+	width:60%;
+	padding-left:0;
+	padding-right:0;
+	margin:2.5em auto 1em auto;
 	font-size:16px;
+}
+
+/* Ticket page */
+#ticket {
+	text-align:center;
+	padding-top:2em;	
+}
+#queue-number {
+	margin: 20px auto 40px;
+	background:#eee;
+	border:1px solid #ddd;
+	border-radius:50%;
+	width:120px;
+	height:105px;
+	padding-top:15px;
+	font-size:70px;
+	font-weight:bold;
+}
+#queue-time {
+	width:60%;
+	margin:1em auto;
+	padding:0.4em 0;
+	border:1px dashed #ddd;
+}
+#queue-time p {
+	font-size:2em;
+	margin:0;
+}
+
+/* Queue */
+#order-list {
+	margin:1em;
+	padding:0;
+}
+#order-list > li {
+	list-style:none;
+	margin:0.5em 0;
+	padding:1em;
+	border:1px solid #ddd;
+}
+#order-list a {
+	display:block;
+	text-decoration:none;
+	color:black;
+}
+#order-list .time {
+	float:right;
+}
+#order-list label {
+	position:relative;
+}
+#order-list .amount {
+	position:absolute;
+	left:50%;
+}
+#order-list .ui-state-disabled {
+	opacity:0.7;
+}
+#queue .ui-footer {
+	padding:0 1em;
 }

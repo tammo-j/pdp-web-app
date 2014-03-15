@@ -1,0 +1,36 @@
+{% load staticfiles %}
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+	<title>{% block title %}Desk Orders{% endblock %}</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<link rel="shortcut icon" sizes="128x128" href="{% static 'img/cart.png' %}" />
+	<link rel="apple-touch-icon" sizes="128x128" href="{% static 'img/cart.png' %}" />
+
+	<link rel="stylesheet" href="{% static 'lib/jquery.mobile-1.4.2.min.css' %}" />
+	<link rel="stylesheet" href="{% static 'style.css' %}" />
+	<script src="{% static 'lib/jquery-1.11.0.min.js' %}"></script>
+	<script>
+		$(document).bind('mobileinit', function()
+		{
+			$.mobile.hashListeningEnabled = false;
+			$.mobile.pushStateEnabled = false;
+			{% block mobile_init_code %}
+			{% endblock %}
+		});
+		{% block js_code %}
+		{% endblock %}
+	</script>
+	<script src="{% static 'lib/jquery.mobile-1.4.2.min.js' %}"></script>
+	{% block head %}
+	{% endblock %}
+</head>
+<body>
+	{% block body %}
+	{% endblock %}
+</body>
+</html>

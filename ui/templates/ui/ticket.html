@@ -1,0 +1,43 @@
+{% extends "ui/mobile.html" %}
+{% load staticfiles %}
+
+{% block js_code %}
+$(document).ready(function() {
+	
+	var i = window.location.href.indexOf('#');
+	if (i > 0 && i < window.location.href.length - 1)
+	{
+		var v = window.location.href.substr(i + 1).split('+');
+		if (v.length >= 2)
+		{
+			$('#queue-number').text(parseInt(v[0]));					
+			$('#queue-time p').text(Math.ceil(parseFloat(v[1])) + ' min');
+		}
+	}
+	
+	$('a').on('click', function(event) {
+		event.preventDefault();
+		window.location.href = "{% url 'ui.views.search' %}";
+	});
+});
+{% endblock %}
+
+{% block body %}
+
+<div data-role="page" id="ticket">
+	<div role="main">
+		<p>Ticket Number:</p>
+		<p id="queue-number">
+			-
+		</p>
+		<p>Ready in:</p>
+		<div id="queue-time" class="ui-corner-all">
+			<p>-</p>
+		</div>
+	</div>
+	<div data-role="footer" data-position="fixed" data-tap-toggle="false">
+		<a href="#" class="ui-btn ui-corner-all">Start Over</a>
+	</div>
+</div>
+
+{% endblock %}

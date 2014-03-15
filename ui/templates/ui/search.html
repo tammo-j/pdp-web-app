@@ -1,0 +1,128 @@
+{% extends 'ui/mobile.html' %}
+{% load staticfiles %}
+
+{% block js_code %}
+var categoriesUrl = "{% url 'orders.views.categories' %}";
+var categoryUrl = "{% url 'orders.views.category_products' 0 %}".slice(0, -1);
+var searchUrl = "{% url 'orders.views.search_products' %}";
+var orderUrl = "{% url 'orders.views.order_products' %}";
+var ticketUrl = "{% url 'ui.views.ticket' %}";
+{% endblock %}
+
+{% block head %}
+<script src="{% static 'site.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+
+<div data-role="header" data-position="fixed" data-theme="a">
+	<div data-role="controlgroup" data-type="horizontal" class="ui-mini ui-btn-left">
+		<a id="back-button" href="#search" class="ui-btn ui-icon-back ui-btn-icon-notext ui-disabled" data-role="button" data-transition="slide" data-direction="reverse">Back</a>
+	</div>
+	<div id="step-title" class="ui-title">
+		<div class="ui-icon ui-icon-search active"></div>
+		<div class="ui-icon ui-icon-check"></div>
+		<div class="ui-icon ui-icon-shop"></div>
+	</div>
+	<div data-role="controlgroup" data-type="horizontal" class="ui-mini ui-btn-right">
+		<!--<a id="category-button" href="#search" class="ui-btn ui-icon-grid ui-btn-icon-notext ui-disabled" data-role="button">Categories</a>-->
+		<a id="cart-button" href="#cart" class="ui-btn ui-icon-shop ui-btn-icon-notext" data-role="button" data-transition="slide">Shopping Cart</a>
+	</div>
+</div>
+
+<div data-role="page" id="search">
+	<form id="search-form" class="ui-content">
+		<label for="search-field">Enter product name or code</label>
+		<input type="search" name="search" id="search-field" />
+		<p class="last">or choose by categories</p>
+	</form>
+	<ul id="product-list" data-role="listview" class="ui-content ui-nodisc-icon ui-alt-icon">
+		<li data-id="tpl__" class="hidden">
+			<a href="#product" data-transition="slide">
+				<img src="{% static 'clear.png' %}" />
+				<span class="name">Item name</span>
+				<span class="price">0,00 &euro;/kg</span>
+			</a>
+		</li>
+		<li data-id="empty__" class="ui-first-child ui-last-child hidden">
+			No products
+		</li>
+	</ul>
+	<div class="ui-content divider">
+		<ul id="category-list">
+			<li data-id="tpl__" class="hidden">
+				<a href="#search" class="ui-btn ui-corner-all">
+					<span class="name">Category name</span>
+					<img src="{% static 'clear.png' %}" />
+				</a>
+			</li>
+		</ul>
+	</div>
+</div>
+
+<div data-role="page" id="product">
+	<div role="main" class="ui-content">
+		<h1>
+			<img class="image" src="{% static 'clear.png' %}" />
+			<span class="name">Product name</span>
+		</h1>
+		<table class="product-attributes">
+			<tr>
+				<th>Price</th>
+				<td class="price">00,00 &euro;/kg</td>
+			</tr>
+			<tr data-id="tpl__" class="hidden">
+				<th>Label</th>
+				<td>Value</td>
+			</tr>
+		</table>
+		<table class="product-facts">
+			<tr>
+				<th colspan="3">Nutrition Facts <small>(Amount per 100 grams)</small></th>
+			</tr>
+			<tr data-id="tpl__" class="hidden">
+				<td class="nam">Label</td>
+				<td class="val">0 g</td>
+				<td class="per">0%</td>
+			</tr>
+			<caption>
+				* Percent daily values are based on a 2,000 calorie diet.
+				Your daily values may be higher or lower depending on
+				your calorie needs.
+			</caption>
+		</table>
+	</div>
+	<div data-role="footer" data-position="fixed" data-tap-toggle="false" class="amount-toolbar">
+		<form class="amount-form" id="amount-slider-form">
+				<input type="range" id="amount-slider" name="amount" min="0" max="2.5" step="0.1" value="0" data-highlight="true" data-show-value="true" data-popup-enabled="true" />
+				<label for="amount-slider">kg</label>
+		</form>
+		<h1 class="total" id="product-total">0,00 &euro;</h1>
+	</div>
+</div>
+
+<div data-role="page" id="cart" data-step="3">
+	<div class="ui-content list-header">
+		Item
+		<span class="price">Price</span>
+	</div>
+	<ul id="cart-list" data-role="listview" class="ui-content">
+		<li data-id="tpl__" class="hidden">
+			<a href="#product" data-transition="slide" data-direction="reverse">
+				<span class="name">Name</span>
+				<span class="price">0,00 &euro;</span>
+			</a>
+			<a class="ui-icon-delete" href="#">
+				Delete
+			</a>
+		</li>
+	</ul>
+	<div data-role="footer" data-position="fixed" data-tap-toggle="false" id="cart-toolbar">
+		<h1>Total</h1>
+		<h1 class="total">0,00 &euro;</h1>
+		<a id="order-button" href="ticket.html" class="ui-btn ui-corner-all">Buy!</a>
+		<form>{% csrf_token %}</form>
+	</div>
+</div>
+
+{% endblock %}

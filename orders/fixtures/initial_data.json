@@ -1,0 +1,120 @@
+[
+	{
+		"model": "auth.User",
+		"pk": 1,
+		"fields": {
+			"username": "root",
+			"password": "pbkdf2_sha256$12000$RwnmGWcUPscY$nu5jezuQyMxLLgWz2QU9BnLouQhla8MP2k2UhvLOJNU=",
+			"is_superuser": 1,
+			"is_staff": 1,
+			"is_active": 1
+		}
+	},
+
+	{
+		"model": "orders.category",
+		"pk": 1,
+		"fields": {
+			"visible": true,
+			"name": "Cheese",
+			"list_weight": 0,
+			"image": "img/cheese.png"
+		}
+	},
+	{
+		"model": "orders.category",
+		"pk": 2,
+		"fields": {
+			"visible": true,
+			"name": "Fish",
+			"list_weight": 0,
+			"image": "img/1_fish.png"
+		}
+	},
+	{
+		"model": "orders.category",
+		"pk": 3,
+		"fields": {
+			"visible": true,
+			"name": "Meat",
+			"list_weight": 0,
+			"image": "img/ham.png"
+		}
+	},
+	{
+		"model": "orders.category",
+		"pk": 4,
+		"fields": {
+			"visible": true,
+			"name": "Salad",
+			"list_weight": 0,
+			"image": "img/lettuce.png"
+		}
+	},
+	
+	{
+		"model": "orders.product",
+		"pk": 1,
+		"fields": {
+			"visible": true,
+			"name": "Salmon fillet",
+			"category": 2,
+			"list_weight": 0,
+			"image": "img/2_fish.png",
+			"code": "5",
+			"price_per_kg": "9.82"
+		}
+	},
+	{
+		"model": "orders.product",
+		"pk": 2,
+		"fields": {
+			"visible": true,
+			"name": "Shark",
+			"category": 2,
+			"list_weight": 0,
+			"image": "img/wireshark.png",
+			"code": "",
+			"price_per_kg": "14.55"
+		}
+	},
+	{
+		"model": "orders.product",
+		"pk": 3,
+		"fields": {
+			"visible": true,
+			"name": "Crab",
+			"category": 2,
+			"list_weight": 0,
+			"image": "img/crab.png",
+			"code": "93",
+			"price_per_kg": "21.34"
+		}
+	},
+	{
+		"model": "orders.product",
+		"pk": 4,
+		"fields": {
+			"visible": true,
+			"name": "Red snapper",
+			"category": 2,
+			"list_weight": 0,
+			"image": "img/fish.png",
+			"code": "3",
+			"price_per_kg": "17.60"
+		}
+	},
+	{
+		"model": "orders.product",
+		"pk": 5,
+		"fields": {
+			"visible": true,
+			"name": "Tuna",
+			"category": 2,
+			"list_weight": 0,
+			"image": "img/1_fish.png",
+			"code": "14",
+			"price_per_kg": "13.70"
+		}
+	}
+]

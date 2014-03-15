@@ -1,0 +1,27 @@
+{% extends "ui/mobile.html" %}
+
+{% block title %}Login Required{% endblock %}
+
+{% block mobile_init_code %}
+$.mobile.ajaxEnabled = false;
+{% endblock %}
+
+{% block body %}
+<div data-role="page">
+	<div data-role="header" data-position="fixed">
+		<h1>Login Required</h1>
+	</div>
+	<div class="ui-content">
+		{% if form.errors %}
+		<p>Your username and password didn't match. Please try again.</p>
+		{% endif %}
+		
+		<form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+			{% csrf_token %}
+			<input type="hidden" name="next" value="{{ next }}" />
+			{{ form.as_table }}			
+			<input type="submit" value="Login" />
+		</form>
+	</div>
+</div>
+{% endblock %}
