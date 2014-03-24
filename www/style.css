@@ -87,27 +87,25 @@ ul#category-list li a img
 {
 	display:block;
 	margin:0 auto;
-	max-width:100px;
-	max-height:100px;
+	height:100px;
 }
 
 /* Product page */
-.product-page
+#product
 {
 	padding:1em 2em;
 }
-.product-page h1
+#product h1
 {
 	margin:0 0 0 -1em;
 	line-height:100px;
 	font-size:1.3em;
 }
-.product-page h1 img
+#product h1 img
 {
 	display:inline-block;
 	vertical-align:middle;
-	max-width:100px;
-	max-height:100px;
+	height:100px;
 	margin-right:1em;
 }
 table.product-attributes
@@ -152,23 +150,13 @@ table.product-facts caption
 /* Product amount input */
 form.amount-form
 {
-	width:70%;
-	float:left;
-	margin:0 0 0 1em;
+	margin:0 9em 0 1em;
 	padding:0;
-}
-form.amount-form .ui-input-text
-{
-	display:block;
-	width:45%;
-	float:left;
+	position:relative;
 }
 form.amount-form .ui-slider
 {
-	display:block;
-	width:80%;
-	float:left;
-	margin:0.7em 0;
+	margin:0.7em 4em 0.7em 0;
 }
 form.amount-form .ui-slider-track
 {
@@ -180,13 +168,17 @@ form.amount-form .ui-slider input
 }
 form.amount-form label
 {
-	float:left;
-	margin:1em 0 0 0.5em;
+	position:absolute;
+	top:0.4em;
+	right:0;
+	width:3.5em;
 }
-.amount-toolbar h1.total
+.amount-toolbar .ui-btn
 {
-	margin:1.15em 0 0 0;
-	padding:0;
+	font-size:16px;
+	padding-top:0.35em;
+	padding-bottom:0.35em;
+	width:4em;
 }
 
 /* Cart toolbar */
@@ -235,6 +227,15 @@ form.amount-form label
 	font-size:2em;
 	margin:0;
 }
+#result ul {
+	padding:0;
+}
+#result ul li {
+	list-style:none;
+}
+#result ul li.canceled {
+	text-decoration:line-through;
+}
 
 /* Queue */
 #order-list {
@@ -247,23 +248,55 @@ form.amount-form label
 	padding:1em;
 	border:1px solid #ddd;
 }
+#order-list > li .number:before {
+	content: "▼";
+	margin-right:0.5em;
+	color:#ddd;
+}
+#order-list > li.minimized .number:before {
+	content: "▶";
+}
 #order-list a {
 	display:block;
 	text-decoration:none;
 	color:black;
 }
+#order-list .items {
+	font-weight:normal;
+	margin-left:2em;
+}
 #order-list .time {
 	float:right;
 }
-#order-list label {
-	position:relative;
+#order-list .late {
+	color:red;
 }
-#order-list .amount {
+#order-list form {
+	margin-top:1em;
+}
+#order-list form .check {
+	position:relative;
+	padding-left:3em;
+}
+#order-list form button {
+	position:absolute;
+	opacity:1;
+	left:0.5em;
+	top:-0.1em;
+	border:none;
+}
+#order-list form .right {
 	position:absolute;
 	left:50%;
 }
-#order-list .ui-state-disabled {
-	opacity:0.7;
+#order-list form a.ui-disabled {
+	opacity:1;
+}
+#order-list form a.ui-disabled span {
+	color:#bbb;
+}
+#order-list form a.check.selected button:after, #order-list form a.delete.selected:after {
+	background-color:#8f8;
 }
 #queue .ui-footer {
 	padding:0 1em;

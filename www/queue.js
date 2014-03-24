@@ -52,55 +52,93 @@ var SiteCode = function()
 			open.push($(this).parent('li').attr('data-id'));
 		});
 
-		// Load orders.
+		// Populate orders.
 		$.mobile.loading('hide');
-		self.populate(self.elements.list, data, self.updateOrdersPopulateCB);
-
+		self.populate(self.elements.list, 'tpl__', data, self.updateOrdersPopulateCB);
+		
 		// Return open forms.
 		for ( var i in open)
 		{
-			self.elements.list.find('li[data-id="' + open[i] + '"]').find(
-				'form:hidden').toggle();
+			self.elements.list.find('li[data-id="' + open[i] + '"]')
+					.removeClass('minimized').find('form:hidden').toggle();
 		}
 		self.scheduleUpdateOrders();
+		
+		// Try to fix first child class.
+		self.elements.list.find('form').find('li[data-id!="tpl2__"]:first').addClass('ui-first-child');
 	};
 	self.updateOrdersPopulateCB = function(el, order, i)
 	{
-		el.find('.number').text(order.number);
-		el.find('.time').text(order.left + ' mins left');
+		var time = parseInt(order.left);
+		el.find('.number').text('#' + order.number);
+		el.find('.items').text(order.count + ' items');
+		el.find('.time').text(order.estimated + ' (' + time + ' mins)');
+		if (time < 0)
+		{
+			el.find('.time').addClass('late');
+		}
+		else
+		{
+			el.find('.time').removeClass('late');
+		}
 
 		// Toggle order items visibility.
-		el.find('a').on('click', function(event)
-		{
-			event.preventDefault();
-			$(this).parent('li').find('form').toggle();
-		});
+		el.find('a').on(
+			'click',
+			function(event)
+			{
+				event.preventDefault();
+				$(this).parent('li').toggleClass('minimized').find('form')
+						.toggle();
+			});
 		if (i > 0)
 		{
-			el.find('form').hide();
+			el.addClass('minimized').find('form').hide();
 		}
 
-		// Add new checkboxes dynamically.
-		var wrap = el.find('fieldset');
-		var cb = $('<input type="checkbox" id="cb0" /><label for="cb0"><span class="name">Product name</span><span class="amount">0.00 kg</span></label>');
-		for ( var i in order.items)
+		// Populate items.
+		self.populate(el.find('ul'), 'tpl2__', order.items, self.updateOrderItemPopulateCB);
+	};
+	self.updateOrderItemPopulateCB = function(el, item, i)
+	{
+		if (item.state != 'queued')
 		{
-			var e = cb.clone();
-			wrap.append(e);
-			var id = 'cb' + order.pk + 'i' + order.items[i].pk;
-			e.filter('label').attr('for', id);
-			e.filter('input').attr('id', id).attr('data-id', order.items[i].pk);
-			if (order.items[i].served)
-			{
-				e.filter('input').prop('checked', true).prop('disabled', true);
-			}
-			e.find('.name').text(order.items[i].name);
-			e.find('.amount').text(order.items[i].amount + ' kg');
+			self.markItem(el, item.state == 'canceled');
+		}		
+		var name = item.name;
+		if (item.code)
+		{
+			name += ' (' + item.code + ')';
 		}
-		wrap.find('input').checkboxradio().on('change', self.itemChecked);
-		wrap.controlgroup();
+		el.find('.name').text(name);
+		el.find('.right').text(item.amount);
+		if (item.price > 0)
+		{
+			var p = parseFloat(item.price);
+			el.find('.right').append(' <small>- ' + p.toFixed(2) + ' &euro;</small>');
+		}
+		
+		el.find('.check').on('click', self.itemChecked);
+		el.find('.delete').on('click', self.itemDeleted);
 	};
 
+	/**
+	 * Marks item that has been acted on.
+	 */
+	self.markItem = function(el, deleteFlag)
+	{
+		el.find('a').addClass('ui-disabled');
+		el.find('a,button').addClass('ui-alt-icon');
+		if (deleteFlag)
+		{
+			el.find('.delete').addClass('selected');
+		}
+		else
+		{
+			el.find('.check').addClass('selected');
+		}
+	};
+	
 	/**
 	 * Schedules update orders within some time.
 	 */
@@ -114,32 +152,40 @@ var SiteCode = function()
 	 */
 	self.itemChecked = function(event)
 	{
+		self.itemAction($(this).parent('li'), false);
+	}
+	self.itemDeleted = function(event)
+	{
+		self.itemAction($(this).parent('li'), true);
+	}
+	self.itemAction = function(li, deleteFlag)
+	{
 		self.updating = true;
-		var input = $(this);
 		$.post(checkUrl, {
-			'csrfmiddlewaretoken' : input.parents('form').find(
+			'csrfmiddlewaretoken' : li.parents('form').find(
 				'input[name="csrfmiddlewaretoken"]').val(),
-			'item' : input.attr('data-id')
+			'item' : li.attr('data-id'),
+			'cancel': deleteFlag
 		}, function(data)
 		{
 			if (data.ok)
 			{
-				$('#order-list input[data-id="' + data.item + '"]')
-						.checkboxradio('disable');
+				var li = $('#order-list form li[data-id="' + data.item + '"]');
+				self.markItem(li, deleteFlag);				
 				if (data.complete)
 				{
-					var li = $('#order-list li[data-id="' + data.order + '"]');
+					var li = $('#order-list > li[data-id="' + data.order + '"]');
 					li.hide('slow', function()
 					{
 						li.remove()
-						var lis = $('#order-list li:visible');
+						var lis = $('#order-list > li:visible');
 						if (lis.size() > 0)
 						{
 							lis.first().find('form:hidden').toggle();
 						}
 						else
 						{
-							$('#order-list li[data-id="empty__"]').removeClass(
+							$('#order-list > li[data-id="empty__"]').removeClass(
 								'hidden').show();
 						}
 					});
@@ -158,11 +204,11 @@ var SiteCode = function()
 	/**
 	 * Populates a list.
 	 */
-	self.populate = function(list, listItems, decorateCB)
+	self.populate = function(list, tpl, listItems, decorateCB)
 	{
 		list.find('li[data-id="empty__"]').addClass('hidden');
 		list.find('li:not(.hidden)').remove();
-		var tpl = list.find('li[data-id="tpl__"]');
+		var tpl = list.find('li[data-id="' + tpl + '"]');
 		var e = null;
 		var i = 0;
 		for ( var i in listItems)

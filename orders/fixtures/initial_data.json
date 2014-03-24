@@ -12,6 +12,14 @@
 	},
 
 	{
+		"model": "orders.setting",
+		"pk": "queue_base_time",
+		"fields": {
+			"value": "2"
+		}
+	},
+	
+	{
 		"model": "orders.category",
 		"pk": 1,
 		"fields": {
@@ -62,7 +70,7 @@
 			"list_weight": 0,
 			"image": "img/2_fish.png",
 			"code": "5",
-			"price_per_kg": "9.82"
+			"price_per_unit": "9.82"
 		}
 	},
 	{
@@ -75,7 +83,7 @@
 			"list_weight": 0,
 			"image": "img/wireshark.png",
 			"code": "",
-			"price_per_kg": "14.55"
+			"price_per_unit": "14.55"
 		}
 	},
 	{
@@ -88,7 +96,10 @@
 			"list_weight": 0,
 			"image": "img/crab.png",
 			"code": "93",
-			"price_per_kg": "21.34"
+			"price_per_unit": "2.34",
+			"unit_label": "pc",
+			"scale_end": "20",
+			"scale_step": "1"
 		}
 	},
 	{
@@ -101,7 +112,7 @@
 			"list_weight": 0,
 			"image": "img/fish.png",
 			"code": "3",
-			"price_per_kg": "17.60"
+			"price_per_unit": "17.60"
 		}
 	},
 	{
@@ -114,7 +125,7 @@
 			"list_weight": 0,
 			"image": "img/1_fish.png",
 			"code": "14",
-			"price_per_kg": "13.70"
+			"price_per_unit": "13.70"
 		}
 	}
 ]

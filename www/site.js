@@ -12,6 +12,8 @@ var SiteCode = function()
 	self.categoryId = null;
 	self.search = null;
 	self.product = null;
+	self.itemId = null;
+	self.itemCount = 0;
 	self.items = {};
 	self.elements = null;
 
@@ -29,6 +31,7 @@ var SiteCode = function()
 			'productList' : $('#product-list'),
 			'cartList' : $('#cart-list'),
 			'backButton' : $('#back-button'),
+			'categoryButton' : $('#category-button'),
 			'cartButton' : $('#cart-button'),
 			'searchField' : $('#search-field'),
 			'productTotal' : $('#product-total'),
@@ -42,6 +45,7 @@ var SiteCode = function()
 
 		// Listen widgets.
 		self.elements.backButton.on('click', self.goBack);
+		self.elements.categoryButton.on('click', self.goCategory);
 		self.elements.searchField.on('keyup', self.searchProducts).on('change',
 			self.searchProducts);
 		$('#amount-slider-form').on(
@@ -77,6 +81,7 @@ var SiteCode = function()
 		if (id == 'search')
 		{
 			self.elements.backButton.attr('href', '#null');
+			self.elements.categoryButton.attr('href', '#null');
 			self.elements.cartButton.removeClass('ui-disabled');
 			self.page = 1;
 
@@ -84,11 +89,13 @@ var SiteCode = function()
 			if (self.categoryId === null && self.search === null)
 			{
 				self.elements.backButton.addClass('ui-disabled');
+				self.elements.categoryButton.addClass('ui-disabled');
 				self.showCategories();
 			}
 			else
 			{
 				self.elements.backButton.removeClass('ui-disabled');
+				self.elements.categoryButton.removeClass('ui-disabled');
 			}
 		}
 
@@ -97,13 +104,30 @@ var SiteCode = function()
 		{
 			self.elements.backButton.attr('href', '#search');
 			self.elements.backButton.removeClass('ui-disabled');
+			self.elements.categoryButton.attr('href', '#search');
+			self.elements.categoryButton.removeClass('ui-disabled');
 			self.elements.cartButton.removeClass('ui-disabled');
 			self.page = 2;
+
+			// Pick the selected item for shopping.
+			if (self.itemId !== null && self.items[self.itemId] !== undefined)
+			{
+				self.product = self.items[self.itemId].object;
+			}
+			else
+			{
+				self.itemId = self.itemCount++;
+				self.items[self.itemId] = {
+					'amount' : 0,
+					'object' : self.product
+				};
+			}
 
 			// Update product data.
 			page.find('img.image').attr('src', self.product.image);
 			page.find('.name').text(self.product.name);
-			page.find('.price').html(self.eur(self.product.price_per_kg, true));
+			page.find('.price').html(
+				self.eur(self.product.price_per_unit, self.product.unit_label));
 
 			// Update product selection.
 			self.elements.productTotal.html('');
@@ -121,6 +145,8 @@ var SiteCode = function()
 				el.find('td').text(item.value);
 			});
 			table = page.find('table.product-facts');
+			table.find('th').text(details['facts_title']);
+			table.find('caption').text(details['facts_caption']);
 			self.populateTable(table, details['facts'], function(el, item)
 			{
 				el.find('.nam').text(item.label);
@@ -150,15 +176,17 @@ var SiteCode = function()
 				self.elements.backButton.attr('href', '#search');
 			}
 			self.elements.backButton.removeClass('ui-disabled');
+			self.elements.categoryButton.attr('href', '#search');
+			self.elements.categoryButton.removeClass('ui-disabled');
 			self.elements.cartButton.addClass('ui-disabled');
 			self.page = 3;
 
 			// Clean empty items.
-			for ( var pk in self.items)
+			for ( var it in self.items)
 			{
-				if (self.items[pk].amount <= 0)
+				if (self.items[it].amount <= 0)
 				{
-					delete self.items[pk];
+					delete self.items[it];
 				}
 			}
 
@@ -169,12 +197,11 @@ var SiteCode = function()
 				{
 					el.find('.name').text(item.object.name);
 					el.find('.price').html(
-						self.eur(item.amount * item.object.price_per_kg));
-					el.find('a').eq(0).data('product', item.object).on('click',
-						function(event)
-						{
-							self.product = $(this).data('product');
-						});
+						self.eur(item.amount * item.object.price_per_unit));
+					el.find('a').eq(0).on('click', function(event)
+					{
+						self.itemId = $(this).parent('li').attr('data-id');
+					});
 					el.find('a.ui-icon-delete').on('click', self.deleteCart);
 					i++;
 				});
@@ -187,14 +214,6 @@ var SiteCode = function()
 				$('#cart-toolbar a').addClass('ui-disabled');
 			}
 			self.updateCartPrice();
-		}
-
-		// Checkout page.
-		else if (id == 'ticket')
-		{
-			self.page = 4;
-			$('#queue-number').text('1');
-			$('#queue-time').text('5 min');
 		}
 	};
 
@@ -217,12 +236,36 @@ var SiteCode = function()
 	{
 		if (self.page < 2)
 		{
-			if (self.page > 0 && self.categoryId !== null)
-			{
-				self.elements.backButton.addClass('ui-disabled');
-				self.elements.searchField.val('');
-				self.showCategories();
-			}
+			self.categoryId = null;
+			self.search = null;
+			self.elements.backButton.addClass('ui-disabled');
+			self.elements.searchField.val('');
+			self.showCategories();
+		}
+		else if (self.page == 2)
+		{
+			self.product = null;
+			self.itemId = null;
+		}
+	};
+
+	/**
+	 * Category button clicked.
+	 */
+	self.goCategory = function(event)
+	{
+		self.categoryId = null;
+		self.search = null;
+		if (self.page < 2)
+		{
+			self.elements.categoryButton.addClass('ui-disabled');
+			self.elements.searchField.val('');
+			self.showCategories();
+		}
+		else if (self.page == 2)
+		{
+			self.product = null;
+			self.itemId = null;
 		}
 	};
 
@@ -258,6 +301,7 @@ var SiteCode = function()
 	self.showProducts = function(categoryId, search)
 	{
 		self.elements.backButton.removeClass('ui-disabled');
+		self.elements.categoryButton.removeClass('ui-disabled');
 		self.elements.categoryList.hide();
 		self.elements.productList.show();
 		$.mobile.loading('show');
@@ -271,7 +315,7 @@ var SiteCode = function()
 			self.categoryId = categoryId;
 			url = categoryUrl + categoryId;
 		}
-		if (url != null)
+		if (url !== null)
 		{
 			$.getJSON(url, function(data)
 			{
@@ -280,11 +324,13 @@ var SiteCode = function()
 						item)
 				{
 					el.find('.name').text(item.name);
-					el.find('.price').html(self.eur(item.price_per_kg, true));
+					el.find('.price').html(
+						self.eur(item.price_per_unit, item.unit_label));
 					el.find('img').attr('src', item.image);
 					el.find('a').data('product', item).on('click',
 						function(event)
 						{
+							self.itemId = null;
 							self.product = $(this).data('product');
 						});
 				});
@@ -323,16 +369,18 @@ var SiteCode = function()
 		if (self.product !== null)
 		{
 			var amount = 0;
-			if (self.items[self.product.pk] !== undefined)
+			if (self.itemId !== null && self.items[self.itemId] !== undefined)
 			{
-				amount = self.items[self.product.pk].amount;
+				amount = self.items[self.itemId].amount;
 			}
-			self.elements.amountSlider.attr('max', self.product.max_kg).attr(
-				'step', self.product.step_kg).val(amount).slider('refresh');
+			self.elements.amountSlider.attr('max', self.product.scale_end)
+					.attr('step', self.product.scale_step).val(amount).slider(
+						'refresh');
+			$('#amount-slider-form label').text(self.product.unit_label);
 			self.elements.amountSlider.parent('.ui-slider').find(
 				'.ui-slider-handle').text(amount);
 			self.elements.productTotal.html(self.eur(amount
-				* self.product.price_per_kg));
+				* self.product.price_per_unit));
 		}
 	}
 
@@ -342,18 +390,13 @@ var SiteCode = function()
 	self.selectAmount = function(event)
 	{
 		var amount = parseFloat(self.elements.amountSlider.val());
+		self.elements.amountSlider.parent('.ui-slider').find(
+			'.ui-slider-handle').text(amount);
 		self.elements.productTotal.html(self.eur(amount
-			* self.product.price_per_kg));
-		if (self.items[self.product.pk] !== undefined)
+			* self.product.price_per_unit));
+		if (self.itemId !== null)
 		{
-			self.items[self.product.pk].amount = amount;
-		}
-		else
-		{
-			self.items[self.product.pk] = {
-				'object' : self.product,
-				'amount' : amount
-			};
+			self.items[self.itemId].amount = amount;
 		}
 		self.updateCartState();
 	};
@@ -364,8 +407,8 @@ var SiteCode = function()
 	self.deleteCart = function(event)
 	{
 		event.preventDefault();
-		var pk = $(this).parent('li').remove().attr('data-id');
-		delete self.items[pk];
+		var id = $(this).parent('li').remove().attr('data-id');
+		delete self.items[id];
 		self.updateFirstAndLastChild(self.elements.cartList.find('li:visible'));
 		self.updateCartState();
 		self.updateCartPrice();
@@ -376,9 +419,9 @@ var SiteCode = function()
 	 */
 	self.updateCartState = function()
 	{
-		for ( var pk in self.items)
+		for ( var id in self.items)
 		{
-			if (self.items[pk].amount > 0)
+			if (self.items[id].amount > 0)
 			{
 				self.elements.cartButton.addClass('ui-highlite');
 				return;
@@ -394,9 +437,10 @@ var SiteCode = function()
 	self.updateCartPrice = function()
 	{
 		var total = 0;
-		for ( var pk in self.items)
+		for ( var id in self.items)
 		{
-			total += self.items[pk].amount * self.items[pk].object.price_per_kg;
+			total += self.items[id].amount
+				* self.items[id].object.price_per_unit;
 		}
 		$('#cart-toolbar .total').html(self.eur(total));
 	};
@@ -424,7 +468,7 @@ var SiteCode = function()
 			list.append(e);
 			i++;
 		}
-		if (e != null)
+		if (e !== null)
 		{
 			e.addClass('ui-last-child');
 		}
@@ -468,7 +512,9 @@ var SiteCode = function()
 	self.productDetails = function(product)
 	{
 		var a = [];
+		var fTitle = '';
 		var f = [];
+		var fCaption = '';
 		if (product.code.trim().length > 0)
 		{
 			a.push({
@@ -477,53 +523,70 @@ var SiteCode = function()
 			});
 		}
 		var lines = product.details.split('\n');
-		var to_a = true;
+		var t = 0;
 		for ( var i in lines)
 		{
 			var line = lines[i].trim();
-			var cols = line.split('|');
-			if (to_a)
+			if (line.length > 0 && line[0] == '-')
 			{
-				if (cols.length >= 2)
-				{
-					a.push({
-						'label' : cols[0],
-						'value' : cols[1]
-					});
-				}
-				else if (line.length > 0 && line[0] == '-')
-				{
-					to_a = false;
-				}
+				t++;
 			}
-			else if (cols.length >= 3)
+			else
 			{
-				f.push({
-					'label' : cols[0],
-					'value' : cols[1],
-					'percent' : cols[2]
-				});
+				if (t < 1)
+				{
+					var cols = line.split('|');
+					if (cols.length >= 2)
+					{
+						a.push({
+							'label' : cols[0],
+							'value' : cols[1]
+						});
+					}
+				}
+				else if (t < 2)
+				{
+					fTitle = line;
+				}
+				else if (t < 3)
+				{
+					var cols = line.split('|');
+					if (cols.length >= 3)
+					{
+						f.push({
+							'label' : cols[0],
+							'value' : cols[1],
+							'percent' : cols[2]
+						});
+					}
+				}
+				else
+				{
+					fCaption = line;
+				}
 			}
 		}
 		return {
 			'attributes' : a,
-			'facts' : f
+			'facts_title' : fTitle,
+			'facts' : f,
+			'facts_caption' : fCaption
 		};
 	};
 
 	/**
 	 * Formats euro value for view.
 	 */
-	self.eur = function(value, perWeight)
+	self.eur = function(value, unit_label)
 	{
 		if (typeof value == 'string')
 		{
 			value = parseFloat(value);
 		}
 		var str = value.toFixed(2).replace(/\./g, ',');
-		if (perWeight !== undefined && perWeight)
+		if (unit_label !== undefined)
 		{
-			return str + ' &euro;/kg';
+			return str + ' &euro;/' + unit_label;
 		}
 		return str + ' &euro;';
 	};
@@ -535,19 +598,22 @@ var SiteCode = function()
 	{
 		event.preventDefault();
 		$.mobile.loading('show');
-		var post = {'csrfmiddlewaretoken':$('#cart-toolbar form input').val()};
+		var post = {
+			'csrfmiddlewaretoken' : $('#cart-toolbar form input').val()
+		};
 		var i = 0;
-		for ( var pk in self.items)
+		for ( var id in self.items)
 		{
-			post['product' + i] = pk;
-			post['amount' + i] = self.items[pk].amount;
+			post['product' + i] = self.items[id].object.pk;
+			post['amount' + i] = self.items[id].amount;
 			i++;
 		}
 		$.post(orderUrl, post, function(data)
 		{
 			if (data.ok)
 			{
-				window.location.href = ticketUrl + '#' + data.number + '+' + data.time;
+				window.location.href = ticketUrl + '#' + data.number + '+'
+					+ data.estimated + '+' + data.time + '+' + data.pk;
 			}
 			else
 			{

@@ -18,13 +18,24 @@ var checkUrl = "{% url 'orders.views.queue_order_check' %}";
 	<ul id="order-list">
 		<li data-id="tpl__" class="ui-corner-all hidden">
 			<a href="#">
-				#<span class="number">19</span>
+				<span class="number">#19</span>
+				<span class="items">0 items</span>
 				<span class="time">0 mins left</span>
 			</a>
 			<form>
 				{% csrf_token %}
-				<fieldset data-role="controlgroup">
-				</fieldset>
+				<ul data-role="listview" data-inset="true">
+					<li data-id="tpl2__" class="hidden">
+						<a class="check" href="#">
+							<button class="ui-btn ui-icon-check ui-btn-icon-notext ui-corner-all" disabled="disabled">Check</button>
+							<span class="name">Name (19)</span>
+							<span class="right">0.00 kg</span>
+						</a>
+						<a class="delete ui-icon-delete" href="#">
+							Delete
+						</a>
+					</li>
+				</ul>
 			</form>
 		</li>
 		<li data-id="empty__" class="ui-corner-all hidden">

@@ -25,7 +25,7 @@ var ticketUrl = "{% url 'ui.views.ticket' %}";
 		<div class="ui-icon ui-icon-shop"></div>
 	</div>
 	<div data-role="controlgroup" data-type="horizontal" class="ui-mini ui-btn-right">
-		<!--<a id="category-button" href="#search" class="ui-btn ui-icon-grid ui-btn-icon-notext ui-disabled" data-role="button">Categories</a>-->
+		<a id="category-button" href="#search" class="ui-btn ui-icon-grid ui-btn-icon-notext ui-disabled" data-role="button" data-transition="slide" data-direction="reverse">Categories</a>
 		<a id="cart-button" href="#cart" class="ui-btn ui-icon-shop ui-btn-icon-notext" data-role="button" data-transition="slide">Shopping Cart</a>
 	</div>
 </div>
@@ -97,7 +97,9 @@ var ticketUrl = "{% url 'ui.views.ticket' %}";
 				<input type="range" id="amount-slider" name="amount" min="0" max="2.5" step="0.1" value="0" data-highlight="true" data-show-value="true" data-popup-enabled="true" />
 				<label for="amount-slider">kg</label>
 		</form>
-		<h1 class="total" id="product-total">0,00 &euro;</h1>
+		<a href="#cart" class="ui-btn ui-btn-right ui-icon-shop ui-btn-icon-left" data-role="button" data-transition="slide">
+			<span class="total" id="product-total">0,00 &euro;</span>
+		</a>
 	</div>
 </div>
 

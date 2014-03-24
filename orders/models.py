@@ -1,6 +1,7 @@
 from django.db import models, transaction
 from django.utils import timezone
 from decimal import Decimal
+from django.utils.timezone import localtime
 
 
 class Category(models.Model):
@@ -28,12 +29,15 @@ class Category(models.Model):
 class ProductManager(models.Manager):
 
     def search(self, query):
-        fields = ['code__icontains', 'name__icontains']
-        queries = [models.Q(**{f: query}) for f in fields]
-        qs = models.Q()
-        for q in queries:
-            qs = qs | q
-        return self.filter(qs)
+        fields = ['code__icontains', 'name__icontains', 'category__name__icontains']
+        qws = models.Q()
+        for word in query.split():
+            queries = [models.Q(**{f: word}) for f in fields]
+            qs = models.Q()
+            for q in queries:
+                qs = qs | q
+            qws = qws & qs
+        return self.filter(qws)
 
 
 class Product(models.Model):
@@ -43,12 +47,12 @@ class Product(models.Model):
     list_weight = models.IntegerField(default=0, help_text='Light products on top, equal weight in alphabetical order.')
     image = models.ImageField(upload_to='img', blank=True, null=True)
     code = models.CharField(max_length=32, blank=True, help_text='Product code shown at the desk.')
-    price_per_kg = models.DecimalField(max_digits=10, decimal_places=2)
-    max_kg = models.DecimalField(max_digits=4, decimal_places=2, default=2.5, help_text='End of the selection scale.')
-    step_kg = models.DecimalField(max_digits=4, decimal_places=2, default=0.1, help_text='Step of the selection scale.')
-    piece_kg = models.DecimalField(max_digits=4, decimal_places=2, default=0.0, help_text='To enable ordering in pieces enter estimate on piece weight.')
+    price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+    unit_label = models.CharField(max_length=8, default="kg")
+    scale_end = models.DecimalField(max_digits=4, decimal_places=2, default=2.5, help_text='End of the selection scale.')
+    scale_step = models.DecimalField(max_digits=4, decimal_places=2, default=0.1, help_text='Step of the selection scale.')
     queue_min = models.DecimalField(max_digits=3, decimal_places=1, default=0.5, help_text='Estimated queue minutes for serving this product.')
-    details = models.TextField(blank=True)
+    details = models.TextField(blank=True, help_text="Label|Value<br />Another Label|And value<br />---<br />Table Title<br />---<br />Ingredient|1 g|1%<br />---<br />* Table caption.")
     objects = ProductManager()
 
     class Meta:
@@ -62,10 +66,10 @@ class Product(models.Model):
             'category_name': self.category.name,
             'image': self.image.url,
             'code': self.code,
-            'price_per_kg': '%0.2f' % (self.price_per_kg),
-            'max_kg': '%0.2f' % (self.max_kg),
-            'step_kg': '%0.2f' % (self.step_kg),
-            'piece_kg': '%0.2f' % (self.piece_kg),
+            'price_per_unit': '%0.2f' % (self.price_per_unit),
+            'unit_label': self.unit_label,
+            'scale_end': '%0.2f' % (self.scale_end),
+            'scale_step': '%0.2f' % (self.scale_step),
             'details': self.details
         }
 
@@ -77,9 +81,7 @@ class Product(models.Model):
             attrs.append('(-no category-)')
         if self.code:
             attrs.append('code=%s' % (self.code))
-        attrs.append(u'sum=%.2f' % (self.price_per_kg))
-        if self.piece_kg > 0:
-            attrs.append('piece_kg=%.2f' % (self.piece_kg))
+        attrs.append(u'price=%.2f/%s' % (self.price_per_unit, self.unit_label))
         if self.visible:
             return ' '.join(attrs)
         return '(hidden) ' + ' '.join(attrs)
@@ -133,19 +135,31 @@ class Order(models.Model):
             dif = (self.estimated - now).seconds / 60
         else:
             dif = (now - self.estimated).seconds / -60
-        items = []
+        items = {}
         for i in self.items.all():
-            items.append({
+            unit = ''
+            price = 0
+            code = False
+            if i.product != None:
+                unit = i.product.unit_label
+                price = i.product.price_per_unit
+                code = i.product.code
+            items[i.pk] = {
                 'pk': i.pk,
                 'name': i.product_name,
-                'amount': '%0.2f' % (i.amount),
-                'served': i.served
-            })
+                'code': code,
+                'amount': '%0.2f %s' % (i.amount, unit),
+                'price': '%0.2f' % (i.amount * price),
+                'state': i.state
+            }
         return {
             'pk': self.pk,
             'number': self.number,
+            'estimated': localtime(self.estimated).strftime('%H:%M'),
             'left': '%0.2f' % dif,
-            'items': items
+            'items': items,
+            'count': len(items),
+            'state': self.state
         }
 
     def __unicode__(self):
@@ -154,15 +168,31 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
+    QUEUED = 'queued'
+    PACKED = 'packed'
+    CANCELED = 'canceled'
+    STATE_CHOICES = (
+        (QUEUED, 'Queued'),
+        (PACKED, 'Packed'),
+        (CANCELED, 'Canceled')
+    )
     order = models.ForeignKey(Order, related_name='items')
     product = models.ForeignKey(Product, blank=True, null=True, on_delete=models.SET_NULL)
     product_name = models.CharField(max_length=128)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    served = models.BooleanField(default=False)
+    state = models.CharField(max_length=32, choices=STATE_CHOICES, default=QUEUED)
 
     class Meta:
         ordering = ['order']
 
     def __unicode__(self):
         return '%s kg=%0.2f sum=%0.2f' % (self.product_name, self.amount, self.total_price)
+
+
+class Setting(models.Model):
+    name = models.CharField(max_length=32, primary_key=True)
+    value = models.CharField(max_length=32)
+
+    def __unicode__(self):
+        return '%s = %s' % (self.name, self.value)

@@ -2,16 +2,18 @@
 {% load staticfiles %}
 
 {% block js_code %}
+var statusUrl = "{% url 'orders.views.order_status' 0 %}".slice(0, -1);
 $(document).ready(function() {
 	
 	var i = window.location.href.indexOf('#');
 	if (i > 0 && i < window.location.href.length - 1)
 	{
 		var v = window.location.href.substr(i + 1).split('+');
-		if (v.length >= 2)
+		if (v.length >= 3)
 		{
-			$('#queue-number').text(parseInt(v[0]));					
-			$('#queue-time p').text(Math.ceil(parseFloat(v[1])) + ' min');
+			$('#queue-number').text(parseInt(v[0]));
+			$('#queue-time p').text(v[1] + ' (' + parseInt(v[2]) + ' min)');
+			statusUrl += parseInt(v[3]);
 		}
 	}
 	
@@ -19,7 +21,32 @@ $(document).ready(function() {
 		event.preventDefault();
 		window.location.href = "{% url 'ui.views.search' %}";
 	});
+	
+	setTimeout(checkStatus, 10000);
 });
+function checkStatus() {
+	$.getJSON(statusUrl, function(data)
+	{
+		$('#queue-number').text(parseInt(data.number));
+		$('#queue-time p').text(data.estimated + ' (' + parseInt(data.left) + ' min)');
+		if (data.state == 'served')
+		{
+			var ul = $('#result').removeClass('hidden').find('ul');
+			ul.empty();
+			for (var i in data.items)
+			{
+				var li = $('<li></li>');
+				ul.append(li);
+				li.text(data.items[i].name + ' ' + data.items[i].amount);
+				if (data.items[i].state == 'canceled')
+				{
+					li.addClass('canceled');
+				}
+			}
+		}
+	});
+	setTimeout(checkStatus, 10000);
+}
 {% endblock %}
 
 {% block body %}
@@ -30,9 +57,13 @@ $(document).ready(function() {
 		<p id="queue-number">
 			-
 		</p>
-		<p>Ready in:</p>
+		<p>Ready at:</p>
 		<div id="queue-time" class="ui-corner-all">
 			<p>-</p>
+		</div>
+		<div id="result" class="hidden">
+			Order is ready for pick up.
+			<ul></ul>
 		</div>
 	</div>
 	<div data-role="footer" data-position="fixed" data-tap-toggle="false">
