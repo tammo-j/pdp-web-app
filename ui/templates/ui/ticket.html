@@ -31,6 +31,7 @@ function checkStatus() {
 		$('#queue-time p').text(data.estimated + ' (' + parseInt(data.left) + ' min)');
 		if (data.state == 'served')
 		{
+			$('#ticket').addClass('served');
 			var ul = $('#result').removeClass('hidden').find('ul');
 			ul.empty();
 			for (var i in data.items)
@@ -57,9 +58,11 @@ function checkStatus() {
 		<p id="queue-number">
 			-
 		</p>
-		<p>Ready at:</p>
-		<div id="queue-time" class="ui-corner-all">
-			<p>-</p>
+		<div id="wait">
+			<p>Ready at:</p>
+			<div id="queue-time" class="ui-corner-all">
+				<p>-</p>
+			</div>
 		</div>
 		<div id="result" class="hidden">
 			Order is ready for pick up.

@@ -227,6 +227,12 @@ form.amount-form label
 	font-size:2em;
 	margin:0;
 }
+.served #wait {
+	display:none;
+}
+.served #queue-number {
+	background:#8f8;
+}
 #result ul {
 	padding:0;
 }
