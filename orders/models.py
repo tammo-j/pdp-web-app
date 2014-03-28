@@ -14,11 +14,14 @@ class Category(models.Model):
         ordering = ['-visible', 'list_weight', 'name']
 
     def json_fields(self):
-        return {
+        fields = {
             'pk': self.pk,
             'name': self.name,
-            'image': self.image.url
+            'image': False
         }
+        if self.image:
+            fields['image'] = self.image.url
+        return fields
 
     def __unicode__(self):
         if self.visible:
@@ -30,7 +33,7 @@ class ProductManager(models.Manager):
 
     def search(self, query):
         fields = ['code__icontains', 'name__icontains', 'category__name__icontains']
-        qws = models.Q()
+        qws = models.Q(**{'visible': True})
         for word in query.split():
             queries = [models.Q(**{f: word}) for f in fields]
             qs = models.Q()
@@ -59,12 +62,12 @@ class Product(models.Model):
         ordering = ['-visible', 'category', 'list_weight', 'name']
 
     def json_fields(self):
-        return {
+        fields = {
             'pk': self.pk,
             'name': self.name,
             'category_pk': self.category.pk,
             'category_name': self.category.name,
-            'image': self.image.url,
+            'image': False,
             'code': self.code,
             'price_per_unit': '%0.2f' % (self.price_per_unit),
             'unit_label': self.unit_label,
@@ -72,6 +75,9 @@ class Product(models.Model):
             'scale_step': '%0.2f' % (self.scale_step),
             'details': self.details
         }
+        if self.image:
+            fields['image'] = self.image.url
+        return fields
 
     def __unicode__(self):
         attrs = [self.name]

@@ -124,7 +124,14 @@ var SiteCode = function()
 			}
 
 			// Update product data.
-			page.find('img.image').attr('src', self.product.image);
+			if (self.product.image)
+			{
+				page.find('img.image').attr('src', self.product.image).css('opacity', 1);
+			}
+			else
+			{
+				page.find('img.image').css('opacity', 0);
+			}
 			page.find('.name').text(self.product.name);
 			page.find('.price').html(
 				self.eur(self.product.price_per_unit, self.product.unit_label));
@@ -285,7 +292,14 @@ var SiteCode = function()
 			self.populate(self.elements.categoryList, data, function(el, item)
 			{
 				el.find('.name').text(item.name);
-				el.find('img').attr('src', item.image);
+				if (item.image)
+				{
+					el.find('img').attr('src', item.image);
+				}
+				else
+				{
+					el.find('img').remove();
+				}
 				el.find('a').on('click', function(event)
 				{
 					event.preventDefault();
@@ -326,7 +340,14 @@ var SiteCode = function()
 					el.find('.name').text(item.name);
 					el.find('.price').html(
 						self.eur(item.price_per_unit, item.unit_label));
-					el.find('img').attr('src', item.image);
+					if (item.image)
+					{
+						el.find('img').attr('src', item.image);
+					}
+					else
+					{
+						el.find('img').remove();
+					}
 					el.find('a').data('product', item).on('click',
 						function(event)
 						{
