@@ -98,11 +98,10 @@ class OrderManager(models.Manager):
     def pick(self):
         new_order = None
         with transaction.atomic():
-            order = self.filter(state=Order.QUEUED).order_by('number').first()
-            if not order or order.number > 80:
+            order = self.order_by('-created').first()
+            if order.number > 98:
                 new_order = Order(number=1)
             else:
-                order = self.filter(state=Order.QUEUED).order_by('-number').first()
                 new_order = Order(number=order.number + 1)
             new_order.save()
         return new_order
