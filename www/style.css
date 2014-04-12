@@ -320,10 +320,10 @@ form.amount-form label
 	position:absolute;
 	left:50%;
 }
-#order-list form a.ui-disabled {
+#order-list form a.processed {
 	opacity:1;
 }
-#order-list form a.ui-disabled span {
+#order-list form a.processed span {
 	color:#bbb;
 }
 #order-list form a.check.selected button:after, #order-list form a.delete.selected:after {

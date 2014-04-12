@@ -77,19 +77,42 @@ def queue_order_check(request):
         raise Http404()
     if 'item' in request.POST:
         item = OrderItem.objects.filter(pk=request.POST['item']).first()
+        return_to_queue = False
         if item:
             if 'cancel' in request.POST and request.POST['cancel'] == 'true':
-                item.state = OrderItem.CANCELED
+                if item.state != OrderItem.CANCELED:
+                    item.state = OrderItem.CANCELED
+                else:
+                    item.state = OrderItem.QUEUED
+                    return_to_queue = True
             else:
-                item.state = OrderItem.PACKED
+                if item.state != OrderItem.PACKED:
+                    item.state = OrderItem.PACKED
+                else:
+                    item.state = OrderItem.QUEUED
+                    return_to_queue = True
             item.save()
             order = item.order
+            if return_to_queue:
+                return _json_response({'ok':True, 'item':item.pk, 'complete':False, 'queued':True, 'order':order.pk})
             if order.items.filter(state=OrderItem.QUEUED).count() > 0:
-                return _json_response({'ok':True, 'item':item.pk, 'complete':False})
+                return _json_response({'ok':True, 'item':item.pk, 'complete':False, 'order':order.pk})
             else:
-                order.state = Order.SERVED
-                order.save()
+                #order.state = Order.SERVED
+                #order.save()
                 return _json_response({'ok':True, 'item':item.pk, 'complete':True, 'order':order.pk})
+    return _json_response({'ok':False})
+
+@login_required
+def queue_order_sign(request):
+    if request.method != 'POST':
+        raise Http404()
+    if 'order' in request.POST:
+        order = Order.objects.filter(pk=request.POST['order']).first()
+        if order and order.items.filter(state=OrderItem.QUEUED).count() == 0:
+            order.state = Order.SERVED
+            order.save()
+            return _json_response({'ok':True, 'order':order.pk})
     return _json_response({'ok':False})
 
 def _json_response_objects(objects, array_flag=False):

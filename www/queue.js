@@ -54,8 +54,9 @@ var SiteCode = function()
 
 		// Populate orders.
 		$.mobile.loading('hide');
-		self.populate(self.elements.list, 'tpl__', data, self.updateOrdersPopulateCB);
-		
+		self.populate(self.elements.list, 'tpl__', data,
+			self.updateOrdersPopulateCB);
+
 		// Return open forms.
 		for ( var i in open)
 		{
@@ -63,9 +64,10 @@ var SiteCode = function()
 					.removeClass('minimized').find('form:hidden').toggle();
 		}
 		self.scheduleUpdateOrders();
-		
+
 		// Try to fix first child class.
-		self.elements.list.find('form').find('li[data-id!="tpl2__"]:first').addClass('ui-first-child');
+		self.elements.list.find('form').find('li[data-id!="tpl2__"]:first')
+				.addClass('ui-first-child');
 	};
 	self.updateOrdersPopulateCB = function(el, order, i)
 	{
@@ -96,15 +98,25 @@ var SiteCode = function()
 			el.addClass('minimized').find('form').hide();
 		}
 
+		var sign = el.find('.sign').on('click', self.signOrder);
+
 		// Populate items.
-		self.populate(el.find('ul'), 'tpl2__', order.items, self.updateOrderItemPopulateCB);
+		var s = self.populate(el.find('ul'), 'tpl2__', order.items,
+			self.updateOrderItemPopulateCB);
+		if (s == 'true')
+		{
+			sign.removeClass('hidden');
+		}
+		return true;
 	};
 	self.updateOrderItemPopulateCB = function(el, item, i)
 	{
+		status = false;
 		if (item.state != 'queued')
 		{
-			self.markItem(el, item.state == 'canceled');
-		}		
+			self.markItem(el, item.state == 'canceled', undefined);
+			status = true;
+		}
 		var name = item.name;
 		if (item.code)
 		{
@@ -115,20 +127,28 @@ var SiteCode = function()
 		if (item.price > 0)
 		{
 			var p = parseFloat(item.price);
-			el.find('.right').append(' <small>- ' + p.toFixed(2) + ' &euro;</small>');
+			el.find('.right').append(
+				' <small>- ' + p.toFixed(2) + ' &euro;</small>');
 		}
-		
+
 		el.find('.check').on('click', self.itemChecked);
 		el.find('.delete').on('click', self.itemDeleted);
+		return status;
 	};
 
 	/**
 	 * Marks item that has been acted on.
 	 */
-	self.markItem = function(el, deleteFlag)
+	self.markItem = function(el, deleteFlag, queueFlag)
 	{
-		el.find('a').addClass('ui-disabled');
-		el.find('a,button').addClass('ui-alt-icon');
+		if (queueFlag)
+		{
+			el.find('a').removeClass('processed');
+			el.find('a,button').removeClass('ui-alt-icon selected');
+			return;
+		}
+		el.find('a').addClass('processed');
+		el.find('a,button').addClass('ui-alt-icon').removeClass('selected');
 		if (deleteFlag)
 		{
 			el.find('.delete').addClass('selected');
@@ -138,7 +158,29 @@ var SiteCode = function()
 			el.find('.check').addClass('selected');
 		}
 	};
-	
+
+	/**
+	 * Hides order from the view.
+	 */
+	self.removeOrder = function(id)
+	{
+		var li = $('#order-list > li[data-id="' + id + '"]');
+		li.hide('slow', function()
+		{
+			li.remove()
+			var lis = $('#order-list > li:visible');
+			if (lis.size() > 0)
+			{
+				lis.first().find('form:hidden').toggle();
+			}
+			else
+			{
+				$('#order-list > li[data-id="empty__"]').removeClass('hidden')
+						.show();
+			}
+		});
+	};
+
 	/**
 	 * Schedules update orders within some time.
 	 */
@@ -165,31 +207,48 @@ var SiteCode = function()
 			'csrfmiddlewaretoken' : li.parents('form').find(
 				'input[name="csrfmiddlewaretoken"]').val(),
 			'item' : li.attr('data-id'),
-			'cancel': deleteFlag
+			'cancel' : deleteFlag
 		}, function(data)
 		{
 			if (data.ok)
 			{
 				var li = $('#order-list form li[data-id="' + data.item + '"]');
-				self.markItem(li, deleteFlag);				
+				self.markItem(li, deleteFlag, data.queued);
+				var orli = $('#order-list > li[data-id="' + data.order + '"]');
 				if (data.complete)
 				{
-					var li = $('#order-list > li[data-id="' + data.order + '"]');
-					li.hide('slow', function()
-					{
-						li.remove()
-						var lis = $('#order-list > li:visible');
-						if (lis.size() > 0)
-						{
-							lis.first().find('form:hidden').toggle();
-						}
-						else
-						{
-							$('#order-list > li[data-id="empty__"]').removeClass(
-								'hidden').show();
-						}
-					});
+					orli.find('.sign').removeClass('hidden');
 				}
+				else
+				{
+					orli.find('.sign').addClass('hidden');
+				}
+			}
+			else
+			{
+				$.mobile.showPageLoadingMsg($.mobile.pageLoadErrorMessageTheme,
+					$.mobile.pageLoadErrorMessage, true);
+				setTimeout($.mobile.hidePageLoadingMsg, 1500);
+			}
+			self.updating = false;
+		}, 'json');
+	};
+
+	/**
+	 * Signs order processed.
+	 */
+	self.signOrder = function(event)
+	{
+		self.updating = true;
+		$.post(signUrl, {
+			'csrfmiddlewaretoken' : $(this).parent('li').find(
+				'form input[name="csrfmiddlewaretoken"]').val(),
+			'order' : $(this).parent('li').attr('data-id')
+		}, function(data)
+		{
+			if (data.ok)
+			{
+				self.removeOrder(data.order);
 			}
 			else
 			{
@@ -211,12 +270,13 @@ var SiteCode = function()
 		var tpl = list.find('li[data-id="' + tpl + '"]');
 		var e = null;
 		var i = 0;
+		var status = true;
 		for ( var i in listItems)
 		{
 			var item = listItems[i];
 			e = tpl.clone().attr('data-id', item.pk).removeClass(
 				'hidden ui-first-child ui-last-child');
-			decorateCB(e, item, i);
+			status = status && decorateCB(e, item, i);
 			if (i == 0)
 			{
 				e.addClass('ui-first-child');
@@ -232,6 +292,7 @@ var SiteCode = function()
 		{
 			list.find('li[data-id="empty__"]').removeClass('hidden');
 		}
+		return status;
 	};
 
 };

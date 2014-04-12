@@ -6,6 +6,7 @@
 {% block js_code %}
 var queueUrl = "{% url 'orders.views.queue_orders' %}";
 var checkUrl = "{% url 'orders.views.queue_order_check' %}";
+var signUrl = "{% url 'orders.views.queue_order_sign' %}";
 {% endblock %}
 
 {% block head %}
@@ -37,6 +38,9 @@ var checkUrl = "{% url 'orders.views.queue_order_check' %}";
 					</li>
 				</ul>
 			</form>
+			<button class="sign ui-btn ui-icon-check ui-btn-icon-left ui-corner-all hidden">
+				Sign order ready
+			</button>
 		</li>
 		<li data-id="empty__" class="ui-corner-all hidden">
 			No orders
