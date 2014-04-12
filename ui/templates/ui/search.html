@@ -15,15 +15,11 @@ var ticketUrl = "{% url 'ui.views.ticket' %}";
 
 {% block body %}
 
-<div data-role="header" data-position="fixed" data-theme="a">
+<div data-role="header" data-position="fixed" data-theme="a" data-tap-toggle="false">
 	<div data-role="controlgroup" data-type="horizontal" class="ui-mini ui-btn-left">
 		<a id="back-button" href="#search" class="ui-btn ui-icon-back ui-btn-icon-notext ui-disabled" data-role="button" data-transition="slide" data-direction="reverse">Back</a>
 	</div>
-	<div id="step-title" class="ui-title">
-		<div class="ui-icon ui-icon-search active"></div>
-		<div class="ui-icon ui-icon-check"></div>
-		<div class="ui-icon ui-icon-shop"></div>
-	</div>
+	<h1>1. Select Product</h1>
 	<div data-role="controlgroup" data-type="horizontal" class="ui-mini ui-btn-right">
 		<a id="category-button" href="#search" class="ui-btn ui-icon-grid ui-btn-icon-notext ui-disabled" data-role="button" data-transition="slide" data-direction="reverse">Categories</a>
 		<a id="cart-button" href="#cart" class="ui-btn ui-icon-shop ui-btn-icon-notext" data-role="button" data-transition="slide">Shopping Cart</a>
@@ -33,7 +29,7 @@ var ticketUrl = "{% url 'ui.views.ticket' %}";
 <div data-role="page" id="search">
 	<form id="search-form" class="ui-content">
 		<label for="search-field">Enter product name or code</label>
-		<input type="search" name="search" id="search-field" />
+		<input type="search" name="search" id="search-field" placeholder="code or keyword" />
 		<p class="last">or choose by categories</p>
 	</form>
 	<ul id="product-list" data-role="listview" class="ui-content ui-nodisc-icon ui-alt-icon">
@@ -93,13 +89,29 @@ var ticketUrl = "{% url 'ui.views.ticket' %}";
 		</table>
 	</div>
 	<div data-role="footer" data-position="fixed" data-tap-toggle="false" class="amount-toolbar">
+		<div data-role="controlgroup" data-type="horizontal" class="ui-mini ui-btn-left">
+			<a id="amount-minus" class="ui-btn ui-icon-minus ui-btn-icon-notext">Remove</a>
+		</div>
 		<form class="amount-form" id="amount-slider-form">
 				<input type="range" id="amount-slider" name="amount" min="0" max="2.5" step="0.1" value="0" data-highlight="true" data-show-value="true" data-popup-enabled="true" />
 				<label for="amount-slider">kg</label>
 		</form>
-		<a href="#cart" class="ui-btn ui-btn-right ui-icon-shop ui-btn-icon-left" data-role="button" data-transition="slide">
-			<span class="total" id="product-total">0,00 &euro;</span>
+		<div data-role="controlgroup" data-type="horizontal" class="ui-mini ui-btn-right">
+			<a id="amount-plus" class="ui-btn ui-icon-plus ui-btn-icon-notext">Add</a>
+		</div>
+		<div id="hint-select" class="out">
+			<h1>Select amount</h1>
+		</div>
+		<a id="button-add" href="#continue" class="ui-btn main-btn ui-corner-all ui-icon-shop ui-btn-icon-left" data-rel="popup" data-transition="pop" data-position-to="window">
+			Add to cart <span class="total" id="product-total">0,00 &euro;</span>
 		</a>
+	</div>
+	<div data-role="popup" id="continue" data-dismissible="false" data-overlay-theme="b" data-theme="b">
+	    <div role="main" class="ui-content">
+	    	<p>Item added to cart.</p>
+	        <p><a href="#search" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-transition="slide" data-direction="reverse">Continue shopping</a></p>
+	        <p><a href="#cart" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-transition="slide">Checkout</a></p>
+	    </div>
 	</div>
 </div>
 
@@ -122,7 +134,7 @@ var ticketUrl = "{% url 'ui.views.ticket' %}";
 	<div data-role="footer" data-position="fixed" data-tap-toggle="false" id="cart-toolbar">
 		<h1>Total</h1>
 		<h1 class="total">0,00 &euro;</h1>
-		<a id="order-button" href="ticket.html" class="ui-btn ui-corner-all">Buy!</a>
+		<a id="order-button" href="ticket.html" class="ui-btn main-btn ui-corner-all">Buy!</a>
 		<form>{% csrf_token %}</form>
 	</div>
 </div>

@@ -1,37 +1,40 @@
-/* Header toolbar */
-.ui-header .ui-title div.ui-icon
+/* Colors */
+.ui-header, .ui-page-theme-a .ui-footer.ui-bar-inherit
 {
-	display:inline-block;
-	width:22px;
-	height:0.9em;
-	position:relative;
+	background-color:#0266b2;
+	color:#fff;
+	text-shadow:none;
 }
-.ui-header .ui-title div.ui-icon::after
+.ui-page-theme-a
 {
-	content:"";
-	display:block;
-	position:absolute;
-	top:-2px;
-	width:22px;
-	height:22px;
-	border-radius:1em;
-	background-position:center center;
-	background-repeat:no-repeat;
-	background-color:transparent;
+	background-color:#fff;
 }
-.ui-header .ui-title div.active::after
+#search-form, .ui-slider-track
 {
-	background-color:rgba(0,0,0,.1);
+	background-color:#f9f9f9;
 }
-.ui-highlite::after
+.ui-btn, .ui-btn:hover
 {
-	background-color:rgba(0,0,255,.5);
+	border-color:#000 !important;
+}
+.ui-input-search.ui-body-inherit
+{
+	border:1px solid #000;
+}
+.ui-highlite
+{
+	background-color:#8f8 !important;
 }
 
 /* Containers */
 .hidden
 {
 	display:none !important;
+}
+.out
+{
+	position:absolute;
+	left:-10000px;
 }
 .divider
 {
@@ -40,6 +43,16 @@
 p.last
 {
 	margin-bottom:0;
+}
+
+/* Elements */
+.ui-footer a.main-btn {
+	display:block;
+	width:60%;
+	padding-left:0;
+	padding-right:0;
+	margin:1em auto;
+	font-size:16px;
 }
 
 /* Product list */
@@ -150,13 +163,13 @@ table.product-facts caption
 /* Product amount input */
 form.amount-form
 {
-	margin:0 9em 0 1em;
+	margin:0 3.5em 0 3.5em;
 	padding:0;
 	position:relative;
 }
 form.amount-form .ui-slider
 {
-	margin:0.7em 4em 0.7em 0;
+	margin:0.7em 3.5em 0.7em 0;
 }
 form.amount-form .ui-slider-track
 {
@@ -171,20 +184,37 @@ form.amount-form label
 	position:absolute;
 	top:0.4em;
 	right:0;
-	width:3.5em;
+	width:3em;
 }
-.amount-toolbar .ui-btn
+.amount-toolbar
 {
+	height:120px;
+}
+#hint-select
+{
+	background:url("bubble.png") no-repeat 0 0;
+	width:252px;
+	margin:-10px 0 0 3.5em;
+	padding:1.2em 0 0.8em 0;
+}
+#hint-select h1
+{
+	margin:0;
+	line-height:44px;
+	color:#000;
 	font-size:16px;
-	padding-top:0.35em;
-	padding-bottom:0.35em;
-	width:4em;
+	text-align:center;
+}
+#continue a
+{
+	display:block;
+}
+#continue p
+{
+	margin:1em 0;
 }
 
 /* Cart toolbar */
-#cart-toolbar {
-	text-align:center;
-}
 #cart-toolbar h1 {
 	float:left;
 }
@@ -192,13 +222,8 @@ form.amount-form label
 	float:right;
 	margin-right:3.6em;
 }
-#cart-toolbar a, #ticket a {
-	display:block;
-	width:60%;
-	padding-left:0;
-	padding-right:0;
-	margin:2.5em auto 1em auto;
-	font-size:16px;
+#cart-toolbar a {
+	margin-top:2.5em;
 }
 
 /* Ticket page */

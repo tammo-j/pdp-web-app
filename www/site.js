@@ -27,6 +27,7 @@ var SiteCode = function()
 
 		// Pick elements.
 		self.elements = {
+			'title' : $('[data-role="header"] h1'),
 			'categoryList' : $('#category-list'),
 			'productList' : $('#product-list'),
 			'cartList' : $('#cart-list'),
@@ -35,6 +36,8 @@ var SiteCode = function()
 			'cartButton' : $('#cart-button'),
 			'searchField' : $('#search-field'),
 			'productTotal' : $('#product-total'),
+			'selectHint' : $('#hint-select'),
+			'addButton' : $('#button-add'),
 			'amountSlider' : null
 		};
 
@@ -55,9 +58,15 @@ var SiteCode = function()
 				self.elements.amountSlider = $('#amount-slider').on('change',
 					self.selectAmount);
 				self.updateSlider();
+				$('#amount-minus').on('click', self.minusAmount);
+				$('#amount-plus').on('click', self.plusAmount);
 			});
+		self.elements.addButton.on('click', self.addToCart);
 		$('#order-button').on('click', self.orderTicket);
 
+		// Set up transitions.
+		self.enableTransition(self.elements.selectHint, 'opacity', '0.5s ease-in');
+		
 		// Setup start page.
 		self.setupPage($('#search'));
 	};
@@ -107,6 +116,7 @@ var SiteCode = function()
 			self.elements.categoryButton.attr('href', '#search');
 			self.elements.categoryButton.removeClass('ui-disabled');
 			self.elements.cartButton.removeClass('ui-disabled');
+			self.elements.selectHint.addClass('out').css('opacity', 0);
 			self.page = 2;
 
 			// Pick the selected item for shopping.
@@ -126,7 +136,8 @@ var SiteCode = function()
 			// Update product data.
 			if (self.product.image)
 			{
-				page.find('img.image').attr('src', self.product.image).css('opacity', 1);
+				page.find('img.image').attr('src', self.product.image).css(
+					'opacity', 1);
 			}
 			else
 			{
@@ -229,10 +240,21 @@ var SiteCode = function()
 	 */
 	self.pageChanged = function(event, data)
 	{
-		if (self.page < 4)
+		/*
+		 * if (self.page < 4) { $('#step-title
+		 * .ui-icon').removeClass('active').eq(self.page - 1)
+		 * .addClass('active'); }
+		 */
+		switch (self.page)
 		{
-			$('#step-title .ui-icon').removeClass('active').eq(self.page - 1)
-					.addClass('active');
+		case 1:
+			self.elements.title.text('1. Select Product');
+			break;
+		case 2:
+			self.elements.title.text('2. Make Order');
+			break;
+		case 3:
+			self.elements.title.text('3. Confirm Order');
 		}
 	};
 
@@ -398,11 +420,37 @@ var SiteCode = function()
 					.attr('step', self.product.scale_step).val(amount).slider(
 						'refresh');
 			$('#amount-slider-form label').text(self.product.unit_label);
-			self.elements.amountSlider.parent('.ui-slider').find(
-				'.ui-slider-handle').text(amount);
-			self.elements.productTotal.html(self.eur(amount
-				* self.product.price_per_unit));
+
+			self.selectAmount(null);
 		}
+	}
+
+	/**
+	 * Removes one step from amount.
+	 */
+	self.minusAmount = function(event)
+	{
+		var v = parseFloat(self.elements.amountSlider.val())
+			- self.product.scale_step;
+		if (v < 0)
+		{
+			v = 0;
+		}
+		self.elements.amountSlider.val(v).slider('refresh');
+	}
+
+	/**
+	 * Adds one step to amount.
+	 */
+	self.plusAmount = function(event)
+	{
+		var v = parseFloat(self.elements.amountSlider.val())
+			+ parseFloat(self.product.scale_step);
+		if (v > self.product.scale_end)
+		{
+			v = self.product.scale_end;
+		}
+		self.elements.amountSlider.val(v).slider('refresh');
 	}
 
 	/**
@@ -415,13 +463,45 @@ var SiteCode = function()
 			'.ui-slider-handle').text(amount);
 		self.elements.productTotal.html(self.eur(amount
 			* self.product.price_per_unit));
+		// if (self.itemId !== null)
+		// {
+		// self.items[self.itemId].amount = amount;
+		// }
+		// self.updateCartState();
+		if (amount > 0)
+		{
+			self.elements.selectHint.addClass('out').css('opacity', 0);
+			self.elements.addButton.removeClass('hidden');
+		}
+		else
+		{
+			self.elements.selectHint.removeClass('out');
+			setTimeout(self.revealHint, 500);
+			self.elements.addButton.addClass('hidden');
+		}
+	};
+	self.revealHint = function()
+	{
+		self.elements.selectHint.css('opacity', 1);
+	}
+
+	/**
+	 * Adds selected item and amount to cart.
+	 */
+	self.addToCart = function(event)
+	{
+		var amount = parseFloat(self.elements.amountSlider.val());
 		if (self.itemId !== null)
 		{
 			self.items[self.itemId].amount = amount;
+			self.updateCartState();
 		}
-		self.updateCartState();
-	};
-
+		
+		// Fix page size problem.
+		var $p = $('#product');
+		$p.css('min-height', parseFloat($p.css('min-height')) + 44);
+	}
+	
 	/**
 	 * Deletes an item in the shopping cart.
 	 */
@@ -611,6 +691,20 @@ var SiteCode = function()
 		}
 		return str + ' &euro;';
 	};
+
+	/**
+	 * Sets transition css3 properties.
+	 */
+	self.enableTransition = function($e, property, time)
+	{
+		var keys = [ "-webkit-transition", "-moz-transition", "-o-transition",
+			"-ms-transition", "transition" ];
+		var v = property + " " + time;
+		for (var i in keys)
+		{
+			$e.css(keys[i], v);
+		}
+	}
 
 	/**
 	 * Orders a ticket.
