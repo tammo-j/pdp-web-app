@@ -7,17 +7,21 @@ from decimal import Decimal
 from datetime import timedelta
 import math
 
+
 def categories(request):
     return _json_response_objects(Category.objects.filter(visible=True))
+
 
 def category_products(request, category_pk):
     category = get_object_or_404(Category, visible=True, pk=category_pk)
     return _json_response_objects(category.products.filter(visible=True))
 
+
 def search_products(request):
     if 'q' in request.GET:
         return _json_response_objects(Product.objects.search(request.GET['q']))
     return _json_response({})
+
 
 def order_products(request):
     if request.method != 'POST':
@@ -62,14 +66,17 @@ def order_products(request):
 
     return _json_response({'ok':False})
 
+
 def order_status(request, order_pk):
     order = get_object_or_404(Order, pk=order_pk)
     return _json_response(order.json_fields())
+
 
 @login_required
 def queue_orders(request):
     orders = Order.objects.filter(state=Order.QUEUED)
     return _json_response_objects(orders, True)
+
 
 @login_required
 def queue_order_check(request):
@@ -103,6 +110,7 @@ def queue_order_check(request):
                 return _json_response({'ok':True, 'item':item.pk, 'complete':True, 'order':order.pk})
     return _json_response({'ok':False})
 
+
 @login_required
 def queue_order_sign(request):
     if request.method != 'POST':
@@ -115,6 +123,19 @@ def queue_order_sign(request):
             return _json_response({'ok':True, 'order':order.pk})
     return _json_response({'ok':False})
 
+
+def register_print_ip(request):
+    PRINTER_KEY = 'printer'
+    if PRINTER_KEY in request.POST:
+        setting = Setting.objects.filter(name=PRINTER_KEY).first()
+        if setting is None:
+            setting = Setting(name=PRINTER_KEY)
+        setting.value = request.POST[PRINTER_KEY]
+        setting.save()
+        return _json_response({'ok':True})
+    return _json_response({'ok':False})
+
+
 def _json_response_objects(objects, array_flag=False):
     data = None
     if array_flag:
@@ -126,6 +147,7 @@ def _json_response_objects(objects, array_flag=False):
         for o in objects:
             data[o.pk] = o.json_fields()
     return _json_response(data)
+
 
 def _json_response(data):
     return HttpResponse(dumps(data), content_type="application/json")

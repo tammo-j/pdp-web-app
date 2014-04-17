@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from orders.views import categories, category_products, search_products,\
     order_products, queue_orders, queue_order_check, order_status,\
-    queue_order_sign
+    queue_order_sign, register_print_ip
 
 urlpatterns = patterns('',
     url(r'^categories/$', categories),
@@ -11,5 +11,6 @@ urlpatterns = patterns('',
     url(r'^status/(\d+)/$', order_status),
     url(r'^protected-queue/$', queue_orders),
     url(r'^protected-queue-check/$', queue_order_check),
-    url(r'^protected-queue-sign/$', queue_order_sign)
+    url(r'^protected-queue-sign/$', queue_order_sign),
+    url(r'^register-print-target/$', register_print_ip)
 )
