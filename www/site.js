@@ -714,7 +714,7 @@ var SiteCode = function()
 		event.preventDefault();
 		$.mobile.loading('show');
 		var post = {
-			'csrfmiddlewaretoken' : $('#cart-toolbar form input').val()
+			'csrfmiddlewaretoken' : $('#cart-toolbar form input[name="csrfmiddlewaretoken"]').val()
 		};
 		var i = 0;
 		for ( var id in self.items)
@@ -727,8 +727,20 @@ var SiteCode = function()
 		{
 			if (data.ok)
 			{
-				window.location.href = ticketUrl + '#' + data.number + '+'
-					+ data.estimated + '+' + data.time + '+' + data.pk;
+				if (printUrl != '')
+				{
+					var $form = $('#cart-toolbar form');
+					$form.find('input[name="number"]').val(data.number);
+					$form.find('input[name="estimated"]').val(data.estimated);
+					$form.find('input[name="time"]').val(data.time);
+					$form.find('input[name="pk"]').val(data.pk);
+					$form.submit();
+				}
+				else
+				{
+					window.location.href = ticketUrl + '#' + data.number + '+'
+						+ data.estimated + '+' + data.time + '+' + data.pk;
+				}
 			}
 			else
 			{

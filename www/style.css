@@ -46,8 +46,9 @@ p.last
 }
 
 /* Elements */
-.ui-footer a.main-btn {
+.ui-footer .main-btn {
 	display:block;
+	clear:both;
 	width:60%;
 	padding-left:0;
 	padding-right:0;

@@ -6,7 +6,8 @@ var categoriesUrl = "{% url 'orders.views.categories' %}";
 var categoryUrl = "{% url 'orders.views.category_products' 0 %}".slice(0, -1);
 var searchUrl = "{% url 'orders.views.search_products' %}";
 var orderUrl = "{% url 'orders.views.order_products' %}";
-var ticketUrl = "{% url 'ui.views.ticket' %}";
+var ticketUrl = "{{ ticket_url }}";
+var printUrl = "{{ print_url }}";
 {% endblock %}
 
 {% block head %}
@@ -134,8 +135,16 @@ var ticketUrl = "{% url 'ui.views.ticket' %}";
 	<div data-role="footer" data-position="fixed" data-tap-toggle="false" id="cart-toolbar">
 		<h1>Total</h1>
 		<h1 class="total">0,00 &euro;</h1>
-		<a id="order-button" href="ticket.html" class="ui-btn main-btn ui-corner-all">Buy!</a>
-		<form>{% csrf_token %}</form>
+		<form action="{{ print_url }}" method="post">
+			{% csrf_token %}
+			<input type="hidden" name="number" value="" />
+			<input type="hidden" name="estimated" value="" />
+			<input type="hidden" name="time" value="" />
+			<input type="hidden" name="pk" value="" />
+			<input type="hidden" name="redirect" value="{{ ticket_url }}" />
+			<input type="hidden" name="show" value="0" />
+			<button id="order-button" class="ui-btn main-btn ui-corner-all">Buy!</button>
+		</form>
 	</div>
 </div>
 

@@ -5,21 +5,26 @@
 var statusUrl = "{% url 'orders.views.order_status' 0 %}".slice(0, -1);
 $(document).ready(function() {
 	
+	var url = "{% url 'ui.views.search' %}";
 	var i = window.location.href.indexOf('#');
 	if (i > 0 && i < window.location.href.length - 1)
 	{
 		var v = window.location.href.substr(i + 1).split('+');
-		if (v.length >= 3)
+		if (v.length > 3)
 		{
 			$('#queue-number').text(parseInt(v[0]));
 			$('#queue-time p').text(v[1] + ' (' + parseInt(v[2]) + ' min)');
 			statusUrl += parseInt(v[3]);
+			if (v.length > 4 && v[4] == 'pr')
+			{
+				url = "{% url 'ui.views.search_printed' %}";
+			}
 		}
 	}
 	
 	$('a').on('click', function(event) {
 		event.preventDefault();
-		window.location.href = "{% url 'ui.views.search' %}";
+		window.location.href = url;
 	});
 	
 	setTimeout(checkStatus, 10000);

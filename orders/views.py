@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.http.response import HttpResponse, Http404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from orders.models import Category, Product, Order, OrderItem, Setting
 from json import dumps
 from decimal import Decimal
@@ -124,7 +125,8 @@ def queue_order_sign(request):
     return _json_response({'ok':False})
 
 
-def register_print_ip(request):
+@csrf_exempt
+def register_print_url(request):
     PRINTER_KEY = 'printer'
     if PRINTER_KEY in request.POST:
         setting = Setting.objects.filter(name=PRINTER_KEY).first()

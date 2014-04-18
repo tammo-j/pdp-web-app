@@ -49,12 +49,22 @@ The installation instructions for the PDP ticket printer
 	6.	Under `Maintenance` select `Print Test Page` and see you get one label printed
 	7.	Close browser and logout from X (GUI) 
 
-10.	Install uwsgi application server and the print_ticket Python application
+10.	Install uwsgi application server and the print ticket application
 	
-		sudo apt-get install uwsgi uwsgi-plugin-python
-		wget http://debyte.fi/tmp/shn/print_ticket.tar.gz
-		tar zxvf print_ticket.tar.gz
+		sudo apt-get install uwsgi uwsgi-plugin-http uwsgi-plugin-python
+		wget http://80.69.173.121/static/raspberry.tar.gz
+		tar zxvf raspberry.tar.gz
 
-11. Run the print server
+11.	Register the ticket printer IP and start printing
 
-		sudo uwsgi --plugin python,http --http :80 --wsgi-file print_ticket.py
+		raspberry/run.sh
+
+12.	Automatically register IP and start printing once booted
+
+	> Edit `/etc/rc.local` and add the run.sh before exit 0
+	
+		<...>
+		
+		/home/pi/raspberry/run.sh
+		
+		exit 0

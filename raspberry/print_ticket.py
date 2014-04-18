@@ -1,6 +1,7 @@
-from cgi import parse_qs
-from PIL import Image, ImageDraw, ImageFont
+import cgi
+import urllib
 import cups
+from PIL import Image, ImageDraw, ImageFont
 
 NUMBER_KEY = 'number'
 TIME_KEY = 'time'
@@ -27,20 +28,27 @@ def application(environ, start_response):
         start_response('404 Not Found', [('Content-Type', 'text/plain')])
         return ['404 Not Found']
 
+    # Get parameters.
+    post = cgi.FieldStorage(
+        fp=environ['wsgi.input'],
+        environ=environ
+    )
+
     # Parse parameters.
     number = None
     time = None
-    parameters = parse_qs(environ.get('QUERY_STRING', ''))
-    if NUMBER_KEY in parameters and parameters[NUMBER_KEY][0].isdigit():
-        number = str(int(parameters[NUMBER_KEY][0]))
-    if TIME_KEY in parameters: 
-        time_parts = parameters[TIME_KEY][0].split(':')
-        while len(time_parts) < 2:
-            time_parts.append(0)
-        if (isinstance(time_parts[0], int) or time_parts[0].isdigit())\
-            and (isinstance(time_parts[1], int) or time_parts[1].isdigit()):
-            time = '%02d:%02d' % (int(time_parts[0]), int(time_parts[1]))
-    if number is None or time is None:
+    redirect = None
+    if 'number' in post and 'estimated' in post and 'time' in post\
+    and 'pk' in post and 'redirect' in post and post['number'].value.isdigit():
+        number = str(post['number'].value)
+        time = str(post['time'].value)
+        redirect = "%s#%s+%s+%s+%s+pr" % (
+            str(post['redirect'].value), number,
+            str(post['estimated'].value), time,
+            str(post['pk'].value))
+
+    # Check everything is received.
+    if number is None or time is None or redirect is None:
         start_response('422 Unprocessable Entity', [('Content-Type', 'text/plain')])
         return ['422 Unprocessable Entity']
 
@@ -49,15 +57,15 @@ def application(environ, start_response):
     write_image(number, time, filename)        
 
     # Image show test.
-    if SHOW_KEY in parameters:
+    if 'show' in post and str(post['show'].value) == '1':
         return serve_file(environ, start_response, filename, 'image/png')
     
     # Print using CUPS.
     con = cups.Connection()
     con.printFile(con.getDefault(), filename, 'Ticket Request', {})
     
-    # Acknowledge with response.
-    start_response('200 Ok', [('Content-Type', 'text/plain')])
+    # Redirect to the ticket page.
+    start_response('303 See other', [('Location', redirect),('Content-Type', 'text/plain')])
     return ['Ticket printed']
 
 
