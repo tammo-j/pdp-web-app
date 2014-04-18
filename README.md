@@ -9,6 +9,6 @@ PDP Web Application for information and preordering system
 	The UI is built on jQuery mobile and javascript which
 	are located in `www/`.
 
-3.	The `raspberry/` includes installation instruction and stand
+3.	The `raspberry/` includes [installation instruction](https://github.com/tammo-j/pdp-web-app/blob/master/raspberry/INSTRUCTIONS.md) and stand
 	alone code (not Django) for Raspberry Pi card computer to
 	direct a Dymo Labelwriter 4xx ticket printer.
