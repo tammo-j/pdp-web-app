@@ -1,7 +1,7 @@
 from django.db import models, transaction
 from django.utils import timezone
-from decimal import Decimal
 from django.utils.timezone import localtime
+from decimal import Decimal
 
 
 class Category(models.Model):

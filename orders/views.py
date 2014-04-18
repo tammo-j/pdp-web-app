@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.http.response import HttpResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import localtime
 from orders.models import Category, Product, Order, OrderItem, Setting
 from json import dumps
 from decimal import Decimal
@@ -62,7 +63,7 @@ def order_products(request):
         order.estimated = order.created + timedelta(minutes=int(math.ceil(wait_time)))
         order.save()
         return _json_response({'ok':True, 'number':order.number,
-                               'estimated': order.estimated.strftime('%H:%M'),
+                               'estimated': localtime(order.estimated).strftime('%H:%M'),
                                'time':'%0.2f' % wait_time, 'pk':order.pk});
 
     return _json_response({'ok':False})
