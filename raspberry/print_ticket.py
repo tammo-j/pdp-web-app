@@ -1,5 +1,4 @@
 import cgi
-import urllib
 import cups
 from PIL import Image, ImageDraw, ImageFont
 
