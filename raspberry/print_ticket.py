@@ -24,7 +24,9 @@ def application(environ, start_response):
     path_string = environ.get('PATH_INFO', '/')
     path = filter(lambda x: len(x) > 0, path_string.split('/'))
     if len(path) != 1 or path[0] != 'ticket':
-        start_response('404 Not Found', [('Content-Type', 'text/plain')])
+        start_response('404 Not Found', [
+                ('Access-Control-Allow-Origin','*'),
+                ('Content-Type', 'text/plain')])
         return ['404 Not Found']
 
     # Get parameters.
@@ -36,19 +38,15 @@ def application(environ, start_response):
     # Parse parameters.
     number = None
     time = None
-    redirect = None
-    if 'number' in post and 'estimated' in post and 'time' in post\
-    and 'pk' in post and 'redirect' in post and post['number'].value.isdigit():
+    if 'number' in post and 'time' in post and post['number'].value.isdigit():
         number = str(post['number'].value)
         time = str(post['time'].value)
-        redirect = "%s#%s+%s+%s+%s+pr" % (
-            str(post['redirect'].value), number,
-            str(post['estimated'].value), time,
-            str(post['pk'].value))
 
     # Check everything is received.
-    if number is None or time is None or redirect is None:
-        start_response('422 Unprocessable Entity', [('Content-Type', 'text/plain')])
+    if number is None or time is None:
+        start_response('422 Unprocessable Entity', [
+                ('Access-Control-Allow-Origin','*'),
+                ('Content-Type', 'text/plain')])
         return ['422 Unprocessable Entity']
 
     # Create ticket image.
@@ -63,8 +61,10 @@ def application(environ, start_response):
     con = cups.Connection()
     con.printFile(con.getDefault(), filename, 'Ticket Request', {})
     
-    # Redirect to the ticket page.
-    start_response('303 See other', [('Location', redirect),('Content-Type', 'text/plain')])
+    # Report success.
+    start_response('200 Ok', [
+                ('Access-Control-Allow-Origin','*'),
+                ('Content-Type', 'text/plain')])
     return ['Ticket printed']
 
 
@@ -111,7 +111,9 @@ def serve_file(environ, start_response, filename, content_type):
     @param content_type a file content type
    '''
     f = open(filename)
-    start_response('200 Ok', [('Content-Type', content_type)])
+    start_response('200 Ok', [
+                ('Access-Control-Allow-Origin','*'),
+                ('Content-Type', content_type)])
     if 'wsgi.file_wrapper' in environ:
         return environ['wsgi.file_wrapper'](f, 1024)
     else:

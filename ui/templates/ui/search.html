@@ -6,8 +6,8 @@ var categoriesUrl = "{% url 'orders.views.categories' %}";
 var categoryUrl = "{% url 'orders.views.category_products' 0 %}".slice(0, -1);
 var searchUrl = "{% url 'orders.views.search_products' %}";
 var orderUrl = "{% url 'orders.views.order_products' %}";
-var ticketUrl = "{{ ticket_url }}";
 var printUrl = "{{ print_url }}";
+var statusUrl = "{% url 'orders.views.order_status' 0 %}".slice(0, -1);
 {% endblock %}
 
 {% block head %}
@@ -116,7 +116,7 @@ var printUrl = "{{ print_url }}";
 	</div>
 </div>
 
-<div data-role="page" id="cart" data-step="3">
+<div data-role="page" id="cart">
 	<div class="ui-content list-header">
 		Item
 		<span class="price">Price</span>
@@ -135,16 +135,34 @@ var printUrl = "{{ print_url }}";
 	<div data-role="footer" data-position="fixed" data-tap-toggle="false" id="cart-toolbar">
 		<h1>Total</h1>
 		<h1 class="total">0,00 &euro;</h1>
+		<a href="#ticket" id="order-button" class="ui-btn main-btn ui-corner-all">Buy!</a>
 		<form action="{{ print_url }}" method="post">
 			{% csrf_token %}
 			<input type="hidden" name="number" value="" />
-			<input type="hidden" name="estimated" value="" />
 			<input type="hidden" name="time" value="" />
-			<input type="hidden" name="pk" value="" />
-			<input type="hidden" name="redirect" value="{{ ticket_url }}" />
-			<input type="hidden" name="show" value="0" />
-			<button id="order-button" class="ui-btn main-btn ui-corner-all">Buy!</button>
 		</form>
+	</div>
+</div>
+
+<div data-role="page" id="ticket">
+	<div role="main">
+		<p>Ticket Number:</p>
+		<p id="queue-number">
+			-
+		</p>
+		<div id="wait">
+			<p>Ready at:</p>
+			<div id="queue-time" class="ui-corner-all">
+				<p>-</p>
+			</div>
+		</div>
+		<div class="result hidden">
+			Order is ready for pick up.
+			<ul></ul>
+		</div>
+	</div>
+	<div data-role="footer" data-position="fixed" data-tap-toggle="false">
+		<a href="#search" id="restart-button" class="ui-btn main-btn ui-corner-all" data-transition="slide" data-direction="reverse">Start Over</a>
 	</div>
 </div>
 

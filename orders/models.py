@@ -99,7 +99,7 @@ class OrderManager(models.Manager):
         new_order = None
         with transaction.atomic():
             order = self.order_by('-created').first()
-            if order.number > 98:
+            if order is None or order.number > 98:
                 new_order = Order(number=1)
             else:
                 new_order = Order(number=order.number + 1)

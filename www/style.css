@@ -259,13 +259,13 @@ form.amount-form label
 .served #queue-number {
 	background:#8f8;
 }
-#result ul {
+.result ul {
 	padding:0;
 }
-#result ul li {
+.result ul li {
 	list-style:none;
 }
-#result ul li.canceled {
+.result ul li.canceled {
 	text-decoration:line-through;
 }
 

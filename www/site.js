@@ -15,6 +15,8 @@ var SiteCode = function()
 	self.itemId = null;
 	self.itemCount = 0;
 	self.items = {};
+	self.ticket = null;
+	self.updateTimeout = null;
 	self.elements = null;
 
 	/**
@@ -63,10 +65,12 @@ var SiteCode = function()
 			});
 		self.elements.addButton.on('click', self.addToCart);
 		$('#order-button').on('click', self.orderTicket);
+		$('#restart-button').on('click', self.restart);
 
 		// Set up transitions.
-		self.enableTransition(self.elements.selectHint, 'opacity', '0.5s ease-in');
-		
+		self.enableTransition(self.elements.selectHint, 'opacity',
+			'0.5s ease-in');
+
 		// Setup start page.
 		self.setupPage($('#search'));
 	};
@@ -89,6 +93,7 @@ var SiteCode = function()
 		// Search page.
 		if (id == 'search')
 		{
+			$('[data-role="header"]').show();
 			self.elements.backButton.attr('href', '#null');
 			self.elements.categoryButton.attr('href', '#null');
 			self.elements.cartButton.removeClass('ui-disabled');
@@ -233,6 +238,19 @@ var SiteCode = function()
 			}
 			self.updateCartPrice();
 		}
+
+		// Ticket page
+		else if (id == 'ticket')
+		{
+			$('[data-role="header"]').hide();
+			self.page = 4;
+
+			// Show ticket data.
+			$('#queue-number').text(self.ticket.number);
+			$('#queue-time p').text(
+				self.ticket.time + ' (' + self.ticket.estimated + ' min)');
+			self.updateTimeout = setTimeout(self.updateTicket, 10000);
+		}
 	};
 
 	/**
@@ -255,6 +273,7 @@ var SiteCode = function()
 			break;
 		case 3:
 			self.elements.title.text('3. Confirm Order');
+			break;
 		}
 	};
 
@@ -496,12 +515,12 @@ var SiteCode = function()
 			self.items[self.itemId].amount = amount;
 			self.updateCartState();
 		}
-		
+
 		// Fix page size problem.
 		var $p = $('#product');
 		$p.css('min-height', parseFloat($p.css('min-height')) + 44);
 	}
-	
+
 	/**
 	 * Deletes an item in the shopping cart.
 	 */
@@ -700,11 +719,11 @@ var SiteCode = function()
 		var keys = [ "-webkit-transition", "-moz-transition", "-o-transition",
 			"-ms-transition", "transition" ];
 		var v = property + " " + time;
-		for (var i in keys)
+		for ( var i in keys)
 		{
 			$e.css(keys[i], v);
 		}
-	}
+	};
 
 	/**
 	 * Orders a ticket.
@@ -714,7 +733,8 @@ var SiteCode = function()
 		event.preventDefault();
 		$.mobile.loading('show');
 		var post = {
-			'csrfmiddlewaretoken' : $('#cart-toolbar form input[name="csrfmiddlewaretoken"]').val()
+			'csrfmiddlewaretoken' : $(
+				'#cart-toolbar form input[name="csrfmiddlewaretoken"]').val()
 		};
 		var i = 0;
 		for ( var id in self.items)
@@ -731,16 +751,14 @@ var SiteCode = function()
 				{
 					var $form = $('#cart-toolbar form');
 					$form.find('input[name="number"]').val(data.number);
-					$form.find('input[name="estimated"]').val(data.estimated);
 					$form.find('input[name="time"]').val(data.time);
-					$form.find('input[name="pk"]').val(data.pk);
-					$form.submit();
+					$.post(printUrl, $form.serialize());
 				}
-				else
-				{
-					window.location.href = ticketUrl + '#' + data.number + '+'
-						+ data.estimated + '+' + data.time + '+' + data.pk;
-				}
+				self.ticket = data;
+				$(':mobile-pagecontainer').pagecontainer('change', '#ticket', {
+					'changeHash' : false,
+					'transition' : 'slide'
+				});
 			}
 			else
 			{
@@ -749,7 +767,55 @@ var SiteCode = function()
 				setTimeout($.mobile.hidePageLoadingMsg, 1500);
 			}
 		}, 'json');
-	}
+	};
+
+	/**
+	 * Updates the ticket.
+	 */
+	self.updateTicket = function()
+	{
+		$.getJSON(statusUrl + self.ticket.pk, function(data)
+		{
+			$('#queue-number').text(data.number);
+			$('#queue-time p')
+					.text(data.estimated + ' (' + data.left + ' min)');
+			if (data.state == 'served')
+			{
+				$('#ticket').addClass('served');
+				var ul = $('#ticket .result').removeClass('hidden').find('ul');
+				ul.empty();
+				for ( var i in data.items)
+				{
+					var li = $('<li></li>');
+					ul.append(li);
+					li.text(data.items[i].name + ' ' + data.items[i].amount);
+					if (data.items[i].state == 'canceled')
+					{
+						li.addClass('canceled');
+					}
+				}
+			}
+		});
+		self.updateTimeout = setTimeout(self.updateTicket, 10000);
+	};
+
+	/**
+	 * Restarts the app.
+	 */
+	self.restart = function(event)
+	{
+		clearTimeout(self.updateTimeout);
+		self.page = 0;
+		self.categoryId = null;
+		self.search = null;
+		self.product = null;
+		self.itemId = null;
+		self.itemCount = 0;
+		self.items = {};
+		self.ticket = null;
+		self.updateTimeout = null;
+		self.updateCartState();
+	};
 };
 
 // Create the site.
