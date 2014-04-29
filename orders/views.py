@@ -129,10 +129,18 @@ def queue_order_sign(request):
 @csrf_exempt
 def register_print_url(request):
     PRINTER_KEY = 'printer'
+    PRINTER_ADMIN_KEY = 'printer_admin'
     if PRINTER_KEY in request.POST:
-        setting = Setting.objects.filter(name=PRINTER_KEY).first()
+        key = PRINTER_KEY
+
+        # Detect admin printer.
+        if 'location' in request.POST and request.POST['location'] == 'admin':
+            key = PRINTER_ADMIN_KEY
+        
+        # Save to settings.
+        setting = Setting.objects.filter(name=key).first()
         if setting is None:
-            setting = Setting(name=PRINTER_KEY)
+            setting = Setting(name=key)
         setting.value = request.POST[PRINTER_KEY]
         setting.save()
         return _json_response({'ok':True})
