@@ -14,4 +14,8 @@ def search_printed(request):
 
 @login_required
 def queue(request):
-    return render(request, 'ui/queue.html')
+    print_url = ''
+    setting = Setting.objects.filter(name='printer_admin').first()
+    if setting != None:
+        print_url = setting.value 
+    return render(request, 'ui/queue.html', {'print_url':print_url})

@@ -245,6 +245,11 @@ var SiteCode = function()
 			$('[data-role="header"]').hide();
 			self.page = 4;
 
+			// Reset ticket.
+			$('#ticket').removeClass('served');
+			var ul = $('#ticket .result').addClass('hidden').find('ul');
+			ul.empty();
+
 			// Show ticket data.
 			$('#queue-number').text(self.ticket.number);
 			$('#queue-time p').text(

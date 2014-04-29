@@ -249,6 +249,13 @@ var SiteCode = function()
 			if (data.ok)
 			{
 				self.removeOrder(data.order);
+				if (printUrl != '')
+				{
+					var $form = $('#print-form');
+					$form.find('input[name="number"]').val(data.number);
+					$form.find('input[name="time"]').val(data.time);
+					$.post(printUrl, $form.serialize());
+				}
 			}
 			else
 			{
