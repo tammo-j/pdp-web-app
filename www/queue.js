@@ -253,7 +253,7 @@ var SiteCode = function()
 				{
 					var $form = $('#print-form');
 					$form.find('input[name="number"]').val(data.number);
-					$form.find('input[name="time"]').val(data.time);
+					$form.find('input[name="time"]').val(data.estimated);
 					$.post(printUrl, $form.serialize());
 				}
 			}

@@ -253,7 +253,7 @@ var SiteCode = function()
 			// Show ticket data.
 			$('#queue-number').text(self.ticket.number);
 			$('#queue-time p').text(
-				self.ticket.time + ' (' + self.ticket.estimated + ' min)');
+				self.ticket.estimated + ' (' + self.ticket.time + ' min)');
 			self.updateTimeout = setTimeout(self.updateTicket, 10000);
 		}
 	};
@@ -756,7 +756,7 @@ var SiteCode = function()
 				{
 					var $form = $('#cart-toolbar form');
 					$form.find('input[name="number"]').val(data.number);
-					$form.find('input[name="time"]').val(data.time);
+					$form.find('input[name="time"]').val(data.estimated);
 					$.post(printUrl, $form.serialize());
 				}
 				self.ticket = data;

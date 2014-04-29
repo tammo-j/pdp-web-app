@@ -122,7 +122,8 @@ def queue_order_sign(request):
         if order and order.items.filter(state=OrderItem.QUEUED).count() == 0:
             order.state = Order.SERVED
             order.save()
-            return _json_response({'ok':True, 'order':order.pk})
+            return _json_response({'ok':True, 'order':order.pk, 'number':order.number,
+                               'estimated': localtime(order.estimated).strftime('%H:%M')})
     return _json_response({'ok':False})
 
 
