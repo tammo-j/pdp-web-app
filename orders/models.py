@@ -197,7 +197,7 @@ class OrderItem(models.Model):
 
 class Setting(models.Model):
     name = models.CharField(max_length=32, primary_key=True)
-    value = models.CharField(max_length=32, blank=True)
+    value = models.CharField(max_length=128, blank=True)
 
     def __unicode__(self):
         return '%s = %s' % (self.name, self.value)

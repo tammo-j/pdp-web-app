@@ -122,8 +122,12 @@ def queue_order_sign(request):
         if order and order.items.filter(state=OrderItem.QUEUED).count() == 0:
             order.state = Order.SERVED
             order.save()
+            itemstr = ''
+            for item in order.items.filter(state=OrderItem.PACKED):
+                itemstr += '%0.2f %s %s\n' % (item.amount, item.product.unit_label, item.product_name)
             return _json_response({'ok':True, 'order':order.pk, 'number':order.number,
-                               'estimated': localtime(order.estimated).strftime('%H:%M')})
+                               'estimated': localtime(order.estimated).strftime('%H:%M'),
+                               'items': itemstr})
     return _json_response({'ok':False})
 
 

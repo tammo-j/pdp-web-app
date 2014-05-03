@@ -10,9 +10,11 @@ cd $BASE
 IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
 PORT=8080
 URL="http://$IP:$PORT/ticket/"
+URLADM="http://$IP:$PORT/ticketadmin/"
 
 echo "Registering URL ($URL)."
 curl --data "printer=$URL" ${SERVICE}rest/register-print-url/
+curl --data "location=admin&printer=$URL" ${SERVICE}rest/register-print-url/
 
 echo "Stopping existing uwsgi."
 pkill uwsgi
