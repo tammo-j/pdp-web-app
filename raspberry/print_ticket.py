@@ -2,6 +2,7 @@ import cgi
 import cups
 from PIL import Image, ImageDraw, ImageFont
 from settings import CLIENT_PRINTER, ADMIN_PRINTER
+from datetime import datetime
 
 NUMBER_KEY = 'number'
 TIME_KEY = 'time'
@@ -59,12 +60,13 @@ def application(environ, start_response):
     filename = None
     if admin_ticket:
         filename = 'tmp/adminticket%s.png' % (number)
-        items = []
-        #if 'items' in post:
-        #    for line in post['items'].value.split('\n'):
-        #        print line
-        #        items.append(line)
-        write_admin_image(number, time, items, filename)
+        items = None
+        price = None
+        if 'items' in post and post['items'].value.isdigit():
+            items = str(post['items'].value)
+        if 'price' in post:
+            price = str(post['price'].value)
+        write_admin_image(number, time, items, price, filename)
     else:
         filename = 'tmp/ticket%s.png' % (number)
         write_image(number, time, filename)
@@ -86,7 +88,7 @@ def application(environ, start_response):
             ('Access-Control-Allow-Origin','*'),
             ('Content-Type', 'text/plain')])
         return ['500 Internal Error: Printer not found. Check the settings.py']
-    con.printFile(printers[printer_name], filename, 'Ticket Request', {})
+    con.printFile(printer_name, filename, 'Ticket Request', {})
     
     # Report success.
     start_response('200 Ok', [
@@ -120,7 +122,7 @@ def write_image(number, time, filename):
     image.save(filename)
 
 
-def write_admin_image(number, time, items, filename):
+def write_admin_image(number, time, items, price, filename):
     '''
     Writes an image of the ticket.
     
@@ -128,8 +130,10 @@ def write_admin_image(number, time, items, filename):
     @param number a ticket number
     @type time C{str}
     @param time a ticket time
-    @type items C{list}
-    @param items a list of items
+    @type items C{str}
+    @param items a number of items
+    @type price C{str}
+    @param price a total price of order
     @type filename C{str}
     @param filename a file to write
     '''
@@ -141,10 +145,13 @@ def write_admin_image(number, time, items, filename):
     # Write texts.
     add_text(draw, MID_X, 29, 18, 'Ticket Number:')
     add_text(draw, MID_X, NUM_Y, 80, number)
-    add_text(draw, MID_X, 213, 18, 'Ready at:')
-    add_text(draw, MID_X, 250, 32, time)
-    #for i in range(0, min(len(items) - 1, 3)):
-    #    add_text(draw, 10, 200 + i * 20, 16, items[i], False)
+    add_text(draw, MID_X, 213, 18, 'Ready since:')
+    #add_text(draw, MID_X, 250, 32, time)
+    add_text(draw, MID_X, 240, 32, datetime.now().strftime('%H:%M'))
+    if items is not None:
+        add_text(draw, MID_X, 263, 18, '%s items' % (items))
+    if price is not None:
+        add_text(draw, MID_X, 280, 18, 'Price %s EUR' % (price))
     image.save(filename)
 
 
