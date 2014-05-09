@@ -249,11 +249,13 @@ var SiteCode = function()
 			if (data.ok)
 			{
 				self.removeOrder(data.order);
-				if (printUrl != '')
+				if (printUrl != '' && data.print)
 				{
 					var $form = $('#print-form');
 					$form.find('input[name="number"]').val(data.number);
 					$form.find('input[name="time"]').val(data.estimated);
+					$form.find('input[name="items"]').val(data.items);
+					$form.find('input[name="price"]').val(data.price);
 					$.post(printUrl, $form.serialize());
 				}
 			}

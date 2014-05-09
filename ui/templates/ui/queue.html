@@ -47,13 +47,16 @@ var printUrl = "{{ print_url }}";
 			No orders
 		</li>
 	</ul>
+	{% if footer %}
 	<div data-role="footer" data-position="fixed" data-tap-toggle="false" class="ui-mini">
 		<a href="{% url 'admin:index' %}">Manage products and categories</a>
 	</div>
+	{% endif %}
 	<form id="print-form" action="{{ print_url }}" method="post">
 		<input type="hidden" name="number" value="" />
 		<input type="hidden" name="time" value="" />
 		<input type="hidden" name="items" value="" />
+		<input type="hidden" name="price" value="" />
 	</form>
 </div>
 

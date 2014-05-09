@@ -51,6 +51,7 @@ var SiteCode = function()
 		// Listen widgets.
 		self.elements.backButton.on('click', self.goBack);
 		self.elements.categoryButton.on('click', self.goCategory);
+		$('#continue-button').on('click', self.goCategory);
 		self.elements.searchField.on('keyup', self.searchProducts).on('change',
 			self.searchProducts);
 		$('#amount-slider-form').on(

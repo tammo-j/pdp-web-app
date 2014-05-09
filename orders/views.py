@@ -1,13 +1,24 @@
 from django.shortcuts import get_object_or_404
 from django.http.response import HttpResponse, Http404
-from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.timezone import localtime
-from orders.models import Category, Product, Order, OrderItem, Setting
+from functools import wraps
 from json import dumps
 from decimal import Decimal
 from datetime import timedelta
+from django.utils.timezone import localtime
+from orders.models import Category, Product, Order, OrderItem, Setting
 import math
+
+
+def protected(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if ('HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].endswith('/queue6u3u3/'))\
+            or (request.user and request.user.is_authenticated()):
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+    return _wrapped_view
 
 
 def categories(request):
@@ -62,6 +73,7 @@ def order_products(request):
         wait_time = order.queue_wait_time() + queue_time
         order.estimated = order.created + timedelta(minutes=int(math.ceil(wait_time)))
         order.save()
+        
         return _json_response({'ok':True, 'number':order.number,
                                'estimated': localtime(order.estimated).strftime('%H:%M'),
                                'time':'%0.2f' % wait_time, 'pk':order.pk});
@@ -74,60 +86,78 @@ def order_status(request, order_pk):
     return _json_response(order.json_fields())
 
 
-@login_required
+@protected
 def queue_orders(request):
     orders = Order.objects.filter(state=Order.QUEUED)
     return _json_response_objects(orders, True)
 
 
-@login_required
+@protected
 def queue_order_check(request):
     if request.method != 'POST':
         raise Http404()
+    
     if 'item' in request.POST:
         item = OrderItem.objects.filter(pk=request.POST['item']).first()
         return_to_queue = False
         if item:
+            
+            # Toggle cancel state.
             if 'cancel' in request.POST and request.POST['cancel'] == 'true':
                 if item.state != OrderItem.CANCELED:
                     item.state = OrderItem.CANCELED
                 else:
                     item.state = OrderItem.QUEUED
                     return_to_queue = True
+
+            # Toggle packed state.            
             else:
                 if item.state != OrderItem.PACKED:
                     item.state = OrderItem.PACKED
                 else:
                     item.state = OrderItem.QUEUED
                     return_to_queue = True
+            
             item.save()
             order = item.order
+
+            # Item returned to queue state.            
             if return_to_queue:
                 return _json_response({'ok':True, 'item':item.pk, 'complete':False, 'queued':True, 'order':order.pk})
+            
+            # Order has still items in queue state.
             if order.items.filter(state=OrderItem.QUEUED).count() > 0:
                 return _json_response({'ok':True, 'item':item.pk, 'complete':False, 'order':order.pk})
+            
+            # All order items are packed or canceled.
             else:
-                #order.state = Order.SERVED
-                #order.save()
                 return _json_response({'ok':True, 'item':item.pk, 'complete':True, 'order':order.pk})
+    
     return _json_response({'ok':False})
 
 
-@login_required
+@protected
 def queue_order_sign(request):
     if request.method != 'POST':
         raise Http404()
+    
     if 'order' in request.POST:
         order = Order.objects.filter(pk=request.POST['order']).first()
         if order and order.items.filter(state=OrderItem.QUEUED).count() == 0:
             order.state = Order.SERVED
             order.save()
-            itemstr = ''
+            
+            # Create statistics on order items.
+            items = 0
+            price = 0
             for item in order.items.filter(state=OrderItem.PACKED):
-                itemstr += '%0.2f %s %s\n' % (item.amount, item.product.unit_label, item.product_name)
+                items += item.amount
+                price += item.total_price
+            
             return _json_response({'ok':True, 'order':order.pk, 'number':order.number,
                                'estimated': localtime(order.estimated).strftime('%H:%M'),
-                               'items': itemstr})
+                               'print': items > 0, 'items': int(items), 'price': '%0.2f' % (price)})
+
     return _json_response({'ok':False})
 
 

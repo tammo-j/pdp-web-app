@@ -110,7 +110,7 @@ var statusUrl = "{% url 'orders.views.order_status' 0 %}".slice(0, -1);
 	<div data-role="popup" id="continue" data-dismissible="false" data-overlay-theme="b" data-theme="b">
 	    <div role="main" class="ui-content">
 	    	<p>Item added to cart.</p>
-	        <p><a href="#search" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-transition="slide" data-direction="reverse">Continue shopping</a></p>
+	        <p><a id="continue-button" href="#search" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-transition="slide" data-direction="reverse">Continue shopping</a></p>
 	        <p><a href="#cart" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-transition="slide">Checkout</a></p>
 	    </div>
 	</div>
