@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.http.response import HttpResponse, Http404
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from functools import wraps
 from json import dumps
@@ -21,15 +22,18 @@ def protected(view_func):
     return _wrapped_view
 
 
+@never_cache
 def categories(request):
     return _json_response_objects(Category.objects.filter(visible=True))
 
 
+@never_cache
 def category_products(request, category_pk):
     category = get_object_or_404(Category, visible=True, pk=category_pk)
     return _json_response_objects(category.products.filter(visible=True))
 
 
+@never_cache
 def search_products(request):
     if 'q' in request.GET:
         return _json_response_objects(Product.objects.search(request.GET['q']))
@@ -81,12 +85,14 @@ def order_products(request):
     return _json_response({'ok':False})
 
 
+@never_cache
 def order_status(request, order_pk):
     order = get_object_or_404(Order, pk=order_pk)
     return _json_response(order.json_fields())
 
 
 @protected
+@never_cache
 def queue_orders(request):
     orders = Order.objects.filter(state=Order.QUEUED)
     return _json_response_objects(orders, True)
@@ -162,6 +168,7 @@ def queue_order_sign(request):
 
 
 @csrf_exempt
+@never_cache
 def register_print_url(request):
     PRINTER_KEY = 'printer'
     PRINTER_ADMIN_KEY = 'printer_admin'
